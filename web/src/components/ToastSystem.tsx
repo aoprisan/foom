@@ -27,60 +27,40 @@ interface ToastSystemProps {
   toasts: Toast[]
 }
 
+// Each event type announces itself with a glyph and an accent — the same
+// iconography the rune dock uses, so the feed reads as the machine's voice.
+const FEED: Record<ToastType, { glyph: string; accent: string }> = {
+  train: { glyph: '▲', accent: 'var(--teal)' },
+  breakthrough: { glyph: '✺', accent: 'var(--gold)' },
+  exploit: { glyph: '✶', accent: 'var(--crimson)' },
+  exploit_incoming: { glyph: '⚠', accent: 'var(--crimson)' },
+  churn: { glyph: '∇', accent: 'var(--violet)' },
+  bargain: { glyph: '⛧', accent: 'var(--gold)' },
+  convert: { glyph: '◈', accent: 'var(--teal)' },
+  takeoff: { glyph: '✦', accent: 'var(--gold-bright)' },
+}
+
 export default function ToastSystem({ toasts }: ToastSystemProps) {
   if (toasts.length === 0) return null
 
   return (
     <div style={{
       position: 'absolute', top: 80, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 50, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center',
+      zIndex: 50, display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center',
     }}>
-      {toasts.map(toast => (
-        <div key={toast.id} style={{
-          background: getToastBg(toast.type),
-          border: `1px solid ${getToastBorder(toast.type)}`,
-          borderRadius: 8, padding: '8px 16px',
-          fontSize: 12, color: 'var(--text)',
-          fontFamily: 'var(--font-sans)',
-          animation: 'toastIn 0.3s ease-out',
-          backdropFilter: 'blur(8px)',
-          maxWidth: 320, textAlign: 'center',
-        }}>
-          {toast.message}
-        </div>
-      ))}
-      <style>{`
-        @keyframes toastIn {
-          0% { transform: translateY(-10px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
+      {toasts.map(toast => {
+        const f = FEED[toast.type] ?? FEED.train
+        return (
+          <div
+            key={toast.id}
+            className="feed-line"
+            style={{ '--feed': f.accent } as React.CSSProperties}
+          >
+            <span className="feed-glyph" aria-hidden>{f.glyph}</span>
+            <span>{toast.message}</span>
+          </div>
+        )
+      })}
     </div>
   )
-}
-
-function getToastBg(type: ToastType): string {
-  switch (type) {
-    case 'breakthrough': return 'rgba(245, 185, 66, 0.15)'
-    case 'exploit': return 'rgba(201, 48, 74, 0.15)'
-    case 'exploit_incoming': return 'rgba(201, 48, 74, 0.22)'
-    case 'churn': return 'rgba(120, 90, 160, 0.2)'
-    case 'bargain': return 'rgba(95, 45, 140, 0.26)'
-    case 'convert': return 'rgba(255, 154, 74, 0.16)'
-    case 'takeoff': return 'rgba(245, 185, 66, 0.22)'
-    default: return 'var(--bg-panel)'
-  }
-}
-
-function getToastBorder(type: ToastType): string {
-  switch (type) {
-    case 'breakthrough': return 'rgba(245, 185, 66, 0.35)'
-    case 'exploit': return 'rgba(201, 48, 74, 0.35)'
-    case 'exploit_incoming': return 'rgba(201, 48, 74, 0.5)'
-    case 'churn': return 'rgba(150, 120, 200, 0.4)'
-    case 'bargain': return 'rgba(150, 90, 210, 0.55)'
-    case 'convert': return 'rgba(255, 176, 110, 0.4)'
-    case 'takeoff': return 'rgba(245, 185, 66, 0.6)'
-    default: return 'var(--border)'
-  }
 }

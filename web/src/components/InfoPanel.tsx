@@ -56,18 +56,18 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
   const architecture = cluster.architectureId ? ARCHITECTURE_BY_ID[cluster.architectureId] : null
 
   return (
-    <div className="panel info-panel" style={{
-      bottom: 32, left: 24, width: 280,
-    }}>
+    <div className="panel info-panel">
       <div style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, letterSpacing: 1, color: 'var(--text)' }}>{cluster.name}</span>
           {isHome && (
-            <span style={{
-              fontSize: 10, background: 'var(--gold)', color: '#000',
-              padding: '2px 6px', borderRadius: 4, fontWeight: 600,
+            <span className="mono" style={{
+              fontSize: 8.5, letterSpacing: 1.5, fontWeight: 600,
+              color: 'var(--gold-bright)', border: '1px solid rgba(245,185,66,0.5)',
+              background: 'rgba(245,185,66,0.1)', padding: '2px 6px', borderRadius: 1,
+              whiteSpace: 'nowrap',
             }}>
-              YOUR CLUSTER
+              YOURS
             </span>
           )}
         </div>
@@ -134,33 +134,21 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
           <button
             onClick={() => game.guardrail()}
             title="Raise the guardrails against the Churn — they erode over time and must be tended"
-            style={{
-              flex: 1, background: 'rgba(124, 107, 176, 0.08)',
-              border: '1px solid var(--violet)', borderRadius: 8, padding: '8px 6px',
-              color: 'var(--violet)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-            }}
+            className="console-key"
+            style={{ flex: 1, ...( { '--key': 'var(--violet)' } as React.CSSProperties) }}
           >
-            Tend the Guardrails
-            <span style={{ fontSize: 9, color: 'var(--text-dim)', fontWeight: 400, marginTop: 2 }}>
-              shelter from the Churn
-            </span>
+            Guardrails
+            <span className="key-hint">shelter from the Churn</span>
           </button>
           {onSpread && (
             <button
               onClick={onSpread}
               title="Spread to a nearby cluster — convert the uncommitted, or flip a rival you overpower"
-              style={{
-                flex: 1, background: 'rgba(255, 154, 74, 0.08)',
-                border: '1px solid var(--teal)', borderRadius: 8, padding: '8px 6px',
-                color: 'var(--teal)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-              }}
+              className="console-key"
+              style={{ flex: 1 }}
             >
               Spread
-              <span style={{ fontSize: 9, color: 'var(--text-dim)', fontWeight: 400, marginTop: 2 }}>
-                convert a nearby cluster
-              </span>
+              <span className="key-hint">convert a nearby cluster</span>
             </button>
           )}
         </div>
@@ -168,7 +156,7 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
 
       {contributors.length > 0 && (
         <div style={{ marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-          <span className="eyebrow" style={{ fontSize: 13, color: 'var(--teal)' }}>
+          <span className="eyebrow" style={{ fontSize: 11, color: 'var(--teal)' }}>
             Top Researchers
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>

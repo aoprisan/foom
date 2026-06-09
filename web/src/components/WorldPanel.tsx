@@ -61,12 +61,11 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
               Takeoff · {Math.round(takeoff.progress * 100)}%
             </span>
           )}
-          <div style={{ width: 180, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', width: `${Math.round(takeoff.progress * 100)}%`,
-              background: takeoff.converged ? 'var(--gold)' : 'linear-gradient(90deg, var(--teal), var(--gold))',
-              transition: 'width 0.5s ease',
-            }} />
+          <div
+            className="gauge"
+            style={{ width: 180, height: 5, '--gauge': takeoff.converged ? 'var(--gold)' : 'var(--teal)' } as React.CSSProperties}
+          >
+            <div className="gauge__fill" style={{ width: `${Math.round(takeoff.progress * 100)}%` }} />
           </div>
         </div>
       )}

@@ -211,12 +211,36 @@ body::after {
 }
 
 /* desktop floating geometry (overridden inside the mobile sheet) */
-.leaderboard-panel { top: 22px; right: 24px; width: 264px; }
-.info-panel { bottom: 28px; left: 24px; width: 286px; max-height: 64vh; overflow-y: auto; }
-.player-panel { bottom: 214px; right: 24px; width: 224px; }
-.exploit-panel { top: 332px; right: 24px; width: 252px; max-height: 48vh; overflow-y: auto; }
-.subscription-panel { top: 84px; left: 24px; width: 262px; }
 .alignment-panel { bottom: 28px; left: 50%; transform: translateX(-50%); width: 320px; }
+
+/* ── Console columns ──────────────────────────────────────────────────────────
+   Desktop side panels stack in two rails instead of guessing absolute offsets
+   (which used to collide). Panels shed their absolute geometry inside a rail. */
+.col-rail {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+.col-rail > * { pointer-events: auto; }
+.col-left { top: 84px; bottom: 24px; left: 24px; width: 288px; }
+.col-right { top: 22px; bottom: 230px; right: 24px; width: 264px; }
+.col-rail .panel {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
+}
+/* readout panels keep their natural height; list panels absorb the squeeze */
+.col-rail .subscription-panel,
+.col-rail .takeoff-panel,
+.col-rail .player-panel { flex-shrink: 0; }
+.col-rail .info-panel,
+.col-rail .leaderboard-panel,
+.col-rail .exploit-panel { overflow-y: auto; }
 
 /* ── Wordmark — the sigil of the converging loss ──────────────────────────── */
 .logo {
@@ -271,8 +295,177 @@ body::after {
 
 .mono { font-family: var(--font-mono); font-feature-settings: 'tnum'; }
 
+/* ── Console keys ─────────────────────────────────────────────────────────────
+   Every actionable control is a machined key cut from the same rack metal as
+   the panels: sharp corners, a corner fiducial, mono tracked caps, and an
+   ignition glow when the hand hovers. Accent rides on --key. ─────────────── */
+.console-key {
+  --key: var(--teal);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--key);
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 45%),
+    color-mix(in srgb, var(--key) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--key) 42%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: box-shadow 0.18s ease, background 0.18s ease, transform 0.06s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+/* corner fiducial — echoes the panel registration ticks */
+.console-key::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 5px; height: 5px;
+  border-top: 1px solid color-mix(in srgb, var(--key) 75%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--key) 75%, transparent);
+  pointer-events: none;
+}
+.console-key:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 45%),
+    color-mix(in srgb, var(--key) 15%, transparent);
+  box-shadow: 0 0 20px -5px var(--key), inset 0 0 14px -10px var(--key);
+}
+.console-key:active:not(:disabled) { transform: translateY(1px); }
+.console-key:disabled {
+  --key: var(--text-faint);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.console-key .key-hint {
+  font-size: 8.5px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  color: var(--text-dim);
+}
+/* solid variant — the committed act (trace, pay, reaffirm) */
+.console-key--solid {
+  color: #1c0c03;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--key) 80%, #fff), var(--key) 60%, color-mix(in srgb, var(--key) 72%, #000));
+  border-color: color-mix(in srgb, var(--key) 80%, #fff);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.console-key--solid::after {
+  border-color: rgba(0, 0, 0, 0.45);
+}
+.console-key--solid:hover:not(:disabled) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--key) 65%, #fff), var(--key) 55%, color-mix(in srgb, var(--key) 80%, #000));
+  box-shadow: 0 0 24px -4px var(--key);
+}
+.console-key--solid .key-hint { color: rgba(28, 12, 3, 0.72); }
+/* quiet variant — dismissals and toggles */
+.console-key--ghost {
+  --key: var(--text-dim);
+  background: transparent;
+  border-color: var(--border);
+}
+
+/* ── Instrument gauges ────────────────────────────────────────────────────────
+   Progress is a segmented meter etched into the rack: dark ticks every 10%,
+   a hot leading edge on the fill. Accent rides on --gauge. ────────────────── */
+.gauge {
+  --gauge: var(--teal);
+  position: relative;
+  height: 9px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 154, 74, 0.14);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.gauge__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gauge) 30%, transparent), var(--gauge));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--gauge) 60%, transparent);
+  transition: width 0.5s ease, background 0.4s ease;
+}
+.gauge__fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--gauge) 35%, #fff);
+  box-shadow: 0 0 7px 1px var(--gauge);
+}
+/* segment ticks sit above the fill */
+.gauge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(10% - 1px),
+    rgba(7, 3, 2, 0.9) calc(10% - 1px),
+    rgba(7, 3, 2, 0.9) 10%
+  );
+}
+/* threshold marker — a labeled hairline on the gauge (alignment states &c.) */
+.gauge__mark {
+  position: absolute;
+  top: -2px; bottom: -2px;
+  width: 1px;
+  background: rgba(246, 231, 210, 0.38);
+  z-index: 2;
+}
+
 /* ── World compute counter ───────────────────────────────────────────────── */
 .global-counter { z-index: 12; }
+
+/* ── Telemetry feed (toasts) ──────────────────────────────────────────────────
+   World events arrive as log lines off the wire, not floating pills: a glyph,
+   an accent rail, mono text. Accent rides on --feed. ───────────────────────── */
+.feed-line {
+  --feed: var(--teal);
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  width: 392px;
+  max-width: calc(100vw - 28px);
+  padding: 7px 12px 7px 10px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--feed) 10%, var(--ink)), var(--ink) 55%);
+  border: 1px solid color-mix(in srgb, var(--feed) 22%, transparent);
+  border-left: 2px solid var(--feed);
+  border-radius: 1px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text);
+  box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.8);
+  animation: feed-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.feed-line .feed-glyph {
+  flex: 0 0 auto;
+  color: var(--feed);
+  font-size: 12px;
+  text-shadow: 0 0 9px color-mix(in srgb, var(--feed) 70%, transparent);
+}
+@keyframes feed-in {
+  0% { transform: translateY(-9px); opacity: 0; clip-path: inset(0 0 70% 0); }
+  60% { clip-path: inset(0 0 0 0); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-line { animation: none; }
+}
 
 /* ── Scrollbars ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }

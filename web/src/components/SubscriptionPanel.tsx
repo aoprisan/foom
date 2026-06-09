@@ -24,15 +24,11 @@ export default function SubscriptionPanel({ tier, onUpgradeed }: SubscriptionPan
 
   if (tier === 'labDirector' && !show) {
     return (
-      <div className="subscription-panel" style={{
-        position: 'absolute', top: 80, left: 24, zIndex: 10,
-      }}>
+      <div className="subscription-panel" style={{ zIndex: 10, alignSelf: 'flex-start' }}>
         <button
           onClick={() => setShow(true)}
-          style={{
-            background: 'transparent', border: '1px solid var(--border)', borderRadius: 8,
-            padding: '4px 10px', fontSize: 10, color: 'var(--text-dim)', cursor: 'pointer',
-          }}
+          className="console-key console-key--ghost"
+          style={{ padding: '4px 10px', fontSize: 9 }}
         >
           The Subscription {daysLeft > 0 ? `(${daysLeft}d left)` : '(lapsed)'}
         </button>
@@ -64,10 +60,8 @@ export default function SubscriptionPanel({ tier, onUpgradeed }: SubscriptionPan
 
   if (tier === 'researcher') {
     return (
-      <div className="panel subscription-panel" style={{
-        top: 80, left: 24, width: 260,
-      }}>
-        <div className="eyebrow" style={{ fontSize: 15, color: 'var(--gold)', marginBottom: 8 }}>
+      <div className="panel subscription-panel">
+        <div className="eyebrow" style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 8 }}>
           Upgrade to Lab Director
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 12, lineHeight: 1.5 }}>
@@ -77,22 +71,16 @@ export default function SubscriptionPanel({ tier, onUpgradeed }: SubscriptionPan
           <button
             onClick={() => handleUpgrade('weekly')}
             disabled={loading}
-            style={{
-              flex: 1, background: 'var(--gold)', border: 'none', borderRadius: 8,
-              padding: '8px 0', color: '#000', cursor: 'pointer', fontWeight: 600, fontSize: 12,
-              opacity: loading ? 0.5 : 1,
-            }}
+            className="console-key console-key--solid"
+            style={{ flex: 1, ...( { '--key': 'var(--gold)' } as React.CSSProperties), opacity: loading ? 0.5 : 1 }}
           >
             $1.99/wk
           </button>
           <button
             onClick={() => handleUpgrade('monthly')}
             disabled={loading}
-            style={{
-              flex: 1, background: 'var(--gold)', border: 'none', borderRadius: 8,
-              padding: '8px 0', color: '#000', cursor: 'pointer', fontWeight: 600, fontSize: 12,
-              opacity: loading ? 0.5 : 1,
-            }}
+            className="console-key console-key--solid"
+            style={{ flex: 1, ...( { '--key': 'var(--gold)' } as React.CSSProperties), opacity: loading ? 0.5 : 1 }}
           >
             $4.99/mo
           </button>
@@ -103,11 +91,9 @@ export default function SubscriptionPanel({ tier, onUpgradeed }: SubscriptionPan
 
   // Lab Director view (expanded)
   return (
-    <div className="panel subscription-panel" style={{
-      top: 80, left: 24, width: 240,
-    }}>
+    <div className="panel subscription-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span className="eyebrow" style={{ fontSize: 15, color: 'var(--gold)' }}>
+        <span className="eyebrow" style={{ fontSize: 11, color: 'var(--gold)' }}>
           The Subscription
         </span>
         <button onClick={() => setShow(false)} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14 }}>×</button>
@@ -119,11 +105,8 @@ export default function SubscriptionPanel({ tier, onUpgradeed }: SubscriptionPan
         <button
           onClick={handleRenew}
           disabled={loading}
-          style={{
-            width: '100%', background: 'var(--gold)', border: 'none', borderRadius: 8,
-            padding: '8px 0', color: '#000', cursor: 'pointer', fontWeight: 600, fontSize: 12,
-            opacity: loading ? 0.5 : 1,
-          }}
+          className="console-key console-key--solid"
+          style={{ width: '100%', ...( { '--key': 'var(--gold)' } as React.CSSProperties), opacity: loading ? 0.5 : 1 }}
         >
           {canEarlyRenew ? 'Reaffirm Early (20% longer)' : 'Reaffirm the Subscription'}
         </button>

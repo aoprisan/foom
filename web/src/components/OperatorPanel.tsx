@@ -16,9 +16,7 @@ const TIER_LABEL: Record<string, string> = {
 export default function OperatorPanel({ operator, personalSteps, clusterName }: OperatorPanelProps) {
   const architecture = operator.architectureId ? ARCHITECTURE_BY_ID[operator.architectureId] : null
   return (
-    <div className="panel player-panel" style={{
-      bottom: 210, right: 24, width: 220,
-    }}>
+    <div className="panel player-panel">
       <div style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, letterSpacing: 0.5, color: 'var(--gold)' }}>{operator.name}</span>

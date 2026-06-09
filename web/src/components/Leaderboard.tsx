@@ -8,10 +8,10 @@ interface LeaderboardProps {
 }
 
 // The three boards of spec §9: faith, spread, and forbidden knowledge.
-const BOARDS: { kind: LeaderboardKind; tab: string; title: string; metric: (c: Cluster) => string }[] = [
-  { kind: 'compute', tab: 'Compute', title: 'Deepest Compute', metric: c => c.compute.toLocaleString() },
-  { kind: 'deployment', tab: 'Deployment', title: 'Widest Deployment', metric: c => `${c.deployment} reached` },
-  { kind: 'research', tab: 'Research', title: 'Deepest Research', metric: c => `${c.research} research` },
+const BOARDS: { kind: LeaderboardKind; tab: string; title: string; metric: (c: Cluster) => string; raw: (c: Cluster) => number }[] = [
+  { kind: 'compute', tab: 'Compute', title: 'Deepest Compute', metric: c => c.compute.toLocaleString(), raw: c => c.compute },
+  { kind: 'deployment', tab: 'Deploy', title: 'Widest Deployment', metric: c => `${c.deployment} reached`, raw: c => c.deployment },
+  { kind: 'research', tab: 'Research', title: 'Deepest Research', metric: c => `${c.research} research`, raw: c => c.research },
 ]
 
 export default function Leaderboard({ version }: LeaderboardProps) {
@@ -27,10 +27,10 @@ export default function Leaderboard({ version }: LeaderboardProps) {
     return () => { cancelled = true }
   }, [kind, version])
 
+  const top = clusters.length > 0 ? Math.max(1, board.raw(clusters[0])) : 1
+
   return (
-    <div className="panel leaderboard-panel" style={{
-      top: 20, right: 24, width: 260,
-    }}>
+    <div className="panel leaderboard-panel">
       <div
         onClick={() => setCollapsed(!collapsed)}
         style={{
@@ -38,10 +38,10 @@ export default function Leaderboard({ version }: LeaderboardProps) {
           cursor: 'pointer', marginBottom: collapsed ? 0 : 12,
         }}
       >
-        <span className="eyebrow" style={{ fontSize: 14, color: 'var(--teal)' }}>
+        <span className="eyebrow" style={{ fontSize: 11, color: 'var(--teal)' }}>
           {board.title}
         </span>
-        <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>{collapsed ? '+' : '-'}</span>
+        <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>{collapsed ? '+' : '−'}</span>
       </div>
 
       {!collapsed && (
@@ -51,11 +51,10 @@ export default function Leaderboard({ version }: LeaderboardProps) {
               <button
                 key={b.kind}
                 onClick={() => setKind(b.kind)}
+                className="console-key"
                 style={{
-                  flex: 1, padding: '4px 0', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                  borderRadius: 6, border: `1px solid ${kind === b.kind ? 'var(--teal)' : 'var(--border)'}`,
-                  background: kind === b.kind ? 'rgba(255, 154, 74,0.12)' : 'transparent',
-                  color: kind === b.kind ? 'var(--teal)' : 'var(--text-dim)',
+                  flex: 1, padding: '4px 0', fontSize: 9, letterSpacing: 1.2,
+                  ...( kind === b.kind ? {} : { '--key': 'var(--text-dim)', background: 'transparent' } ) as React.CSSProperties,
                 }}
               >
                 {b.tab}
@@ -63,31 +62,52 @@ export default function Leaderboard({ version }: LeaderboardProps) {
             ))}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {clusters.length === 0 && (
               <span style={{ color: 'var(--text-dim)', fontSize: 13 }}>The world sleeps</span>
             )}
-            {clusters.map((cluster, i) => (
-              <div key={cluster.id} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '4px 0',
-              }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 0 }}>
-                  <span className="mono" style={{ fontSize: 12, color: 'var(--text-dim)', width: 20 }}>
-                    {i + 1}.
-                  </span>
-                  <span style={{
-                    fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            {clusters.map((cluster, i) => {
+              const first = i === 0
+              const share = Math.max(0.02, board.raw(cluster) / top)
+              return (
+                <div key={cluster.id} style={{
+                  position: 'relative',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '4px 6px',
+                  overflow: 'hidden',
+                }}>
+                  {/* magnitude bar — each cluster's standing relative to the leader */}
+                  <div aria-hidden style={{
+                    position: 'absolute', inset: '0 auto 0 0',
+                    width: `${share * 100}%`,
+                    background: first
+                      ? 'linear-gradient(90deg, rgba(245,185,66,0.16), rgba(245,185,66,0.03))'
+                      : 'linear-gradient(90deg, rgba(255,154,74,0.10), rgba(255,154,74,0.015))',
+                    borderLeft: first ? '2px solid rgba(245,185,66,0.7)' : '2px solid rgba(255,154,74,0.35)',
+                    transition: 'width 0.6s ease',
+                  }} />
+                  <div style={{ display: 'flex', gap: 7, alignItems: 'center', minWidth: 0, position: 'relative' }}>
+                    <span className="mono" style={{ fontSize: 11, color: first ? 'var(--gold)' : 'var(--text-faint)', width: 16, flexShrink: 0 }}>
+                      {first ? '✦' : i + 1}
+                    </span>
+                    <span style={{
+                      fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      color: first ? 'var(--gold-bright)' : 'var(--text)',
+                      textShadow: first ? '0 0 10px rgba(245,185,66,0.35)' : 'none',
+                    }}>
+                      {cluster.name}
+                    </span>
+                    <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{cluster.countryCode}</span>
+                  </div>
+                  <span className="mono" style={{
+                    position: 'relative', fontSize: 12, flexShrink: 0, marginLeft: 8,
+                    color: first ? 'var(--gold-bright)' : 'var(--gold)',
                   }}>
-                    {cluster.name}
+                    {board.metric(cluster)}
                   </span>
-                  <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{cluster.countryCode}</span>
                 </div>
-                <span className="mono" style={{ fontSize: 12, color: 'var(--gold)', flexShrink: 0, marginLeft: 8 }}>
-                  {board.metric(cluster)}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </>
       )}

@@ -10,13 +10,14 @@ interface MolochCardProps {
 // Seconds the offer stands before Moloch withdraws it (auto-declines).
 const STAND_SECONDS = 14
 
-const VIOLET = '#9a5fe0'
-
 /**
  * Moloch's offer (spec §6, §7). The grant and the alignment cost are shown;
  * the catch is *not* — only the flavour hints it, and a standing reminder that
  * the price is unnamed. That asymmetry is the gamble. Refusing costs nothing;
  * letting the countdown lapse refuses for you.
+ *
+ * Moloch is sacral gold — the prize, the race to the bottom — not the Churn's
+ * cold violet. The card burns like an offer plate held over the fire.
  */
 export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardProps) {
   const [left, setLeft] = useState(STAND_SECONDS)
@@ -52,15 +53,15 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
     <div className="panel moloch-card" style={{
       position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
       width: 'min(360px, calc(100vw - 32px))', zIndex: 60,
-      border: `1px solid ${VIOLET}66`,
-      boxShadow: `0 0 40px ${VIOLET}40, inset 0 0 24px ${VIOLET}1a`,
-      background: 'rgba(18, 10, 26, 0.92)', backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(245, 185, 66, 0.45)',
+      boxShadow: '0 0 48px rgba(245, 185, 66, 0.22), 0 24px 60px -18px rgba(0,0,0,0.9), inset 0 0 30px rgba(245, 185, 66, 0.07)',
+      background: 'rgba(26, 14, 5, 0.94)', backdropFilter: 'blur(10px)',
       padding: 18, animation: 'molochIn 0.4s ease-out',
     }}>
-      <div className="eyebrow" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2, marginBottom: 6 }}>
+      <div className="eyebrow" style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: 2, marginBottom: 6 }}>
         Moloch, the Tempter · a bargain
       </div>
-      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600, fontSize: 27, lineHeight: 1.1, color: 'var(--bone)', marginBottom: 10 }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600, fontSize: 27, lineHeight: 1.1, color: 'var(--bone)', marginBottom: 10, textShadow: '0 0 22px rgba(245,185,66,0.3)' }}>
         {bargain.title}
       </div>
       <div className="liturgy" style={{ fontSize: 16, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
@@ -74,29 +75,24 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
           value={bargain.alignmentCost > 0 ? `${bargain.alignmentCost} alignment, now` : 'nothing — it says'}
           color="var(--gold)"
         />
-        <Row label="The price" value="unnamed, and later" color={VIOLET} />
+        <Row label="The price" value="unnamed, and later" color="var(--crimson)" />
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => { if (!declined.current) { declined.current = true; onAccept(bargain.id) } }} style={{
-          flex: 1, background: VIOLET, border: 'none', borderRadius: 8, padding: '10px 0',
-          color: '#0a0410', cursor: 'pointer', fontWeight: 700, fontSize: 13,
-        }}>
+        <button
+          onClick={() => { if (!declined.current) { declined.current = true; onAccept(bargain.id) } }}
+          className="console-key console-key--solid"
+          style={{ flex: 1, padding: '10px 0', ...( { '--key': 'var(--gold)' } as React.CSSProperties) }}
+        >
           Seal the bargain
         </button>
-        <button onClick={decline} style={{
-          flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 8,
-          padding: '10px 0', color: 'var(--text-dim)', cursor: 'pointer', fontWeight: 600, fontSize: 13,
-        }}>
+        <button onClick={decline} className="console-key console-key--ghost" style={{ flex: 1, padding: '10px 0' }}>
           Refuse
         </button>
       </div>
 
-      <div style={{ marginTop: 12, height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', width: `${(left / STAND_SECONDS) * 100}%`, background: `${VIOLET}cc`,
-          transition: 'width 1s linear',
-        }} />
+      <div className="gauge" style={{ marginTop: 12, height: 4, '--gauge': 'var(--gold)' } as React.CSSProperties}>
+        <div className="gauge__fill" style={{ width: `${(left / STAND_SECONDS) * 100}%`, transition: 'width 1s linear' }} />
       </div>
 
       <style>{`
@@ -112,7 +108,7 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
 function Row({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12 }}>
-      <span style={{ color: 'var(--text-dim)' }}>{label}</span>
+      <span style={{ color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>{label}</span>
       <span style={{ color, textAlign: 'right', fontWeight: 600 }}>{value}</span>
     </div>
   )

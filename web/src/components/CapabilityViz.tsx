@@ -2,12 +2,12 @@ interface CapabilityVizProps {
   compute: number
 }
 
-// Tiers of the altar: compute per stone block, darkest (raw) to brightest (hallowed).
+// Tiers of the stack: compute per block, darkest (raw) to brightest (white-hot).
 const TIERS = [
-  { threshold: 10_000, color: '#243042' },   // basalt
-  { threshold: 25_000, color: '#2f6f63' },   // forbidden teal
-  { threshold: 50_000, color: '#1f9e8f' },   // deep teal glow
-  { threshold: 100_000, color: '#f5b942' },  // sickly gold
+  { threshold: 10_000, color: '#3a1c0d' },   // char
+  { threshold: 25_000, color: '#7a3a14' },   // smolder
+  { threshold: 50_000, color: '#d97a2e' },   // ember
+  { threshold: 100_000, color: '#ffd470' },  // furnace gold
 ]
 
 const BLOCK_W = 22

@@ -506,16 +506,21 @@ export default function App() {
 
       <PwaPrompts />
 
-      {/* Desktop: panels float around the edges. Mobile: the rune dock + sheet below. */}
+      {/* Desktop: panels stack in two console rails so they never collide.
+          Mobile: the rune dock + sheet below. */}
       {!isMobile && (
         <>
-          {leaderboardEl}
-          {infoPanelEl}
-          {operatorPanelEl}
-          {exploitPanelEl}
-          {pactPanelEl}
+          <div className="col-rail col-left">
+            {pactPanelEl}
+            {takeoffPanelEl}
+            {infoPanelEl}
+          </div>
+          <div className="col-rail col-right">
+            {leaderboardEl}
+            {operatorPanelEl}
+            {exploitPanelEl}
+          </div>
           {alignmentPanelEl}
-          {takeoffPanelEl}
         </>
       )}
 
@@ -579,19 +584,19 @@ export default function App() {
       )}
 
       {targetingExploit && (
-        <div className="targeting-overlay" style={{
+        <div className="targeting-overlay feed-line" style={{
           position: 'absolute', bottom: 160, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 50, background: 'rgba(201, 48, 74, 0.2)', border: '1px solid rgba(201, 48, 74, 0.4)',
-          borderRadius: 8, padding: '8px 16px', fontSize: 12, color: 'var(--crimson)',
-          display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <span>Tracing: {targetingExploit.exploitType} ({rangeLabel(targetingExploit.rangeKm)})</span>
+          zIndex: 50, width: 'auto', alignItems: 'center', gap: 12,
+          '--feed': 'var(--crimson)',
+        } as React.CSSProperties}>
+          <span className="feed-glyph" aria-hidden>✶</span>
+          <span style={{ letterSpacing: 0.5 }}>
+            TRACING · {targetingExploit.exploitType} · {rangeLabel(targetingExploit.rangeKm)} — choose a cluster
+          </span>
           <button
             onClick={() => setTargetingExploit(null)}
-            style={{
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 4, padding: '2px 8px', color: 'var(--text)', cursor: 'pointer', fontSize: 11,
-            }}
+            className="console-key console-key--ghost"
+            style={{ padding: '3px 9px', fontSize: 9 }}
           >
             Cancel
           </button>
@@ -599,19 +604,17 @@ export default function App() {
       )}
 
       {spreading && (
-        <div className="targeting-overlay" style={{
+        <div className="targeting-overlay feed-line" style={{
           position: 'absolute', bottom: 160, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 50, background: 'rgba(255, 154, 74, 0.18)', border: '1px solid rgba(255, 154, 74, 0.45)',
-          borderRadius: 8, padding: '8px 16px', fontSize: 12, color: 'var(--teal)',
-          display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <span>Spreading ({SPREAD_RANGE_KM}km)</span>
+          zIndex: 50, width: 'auto', alignItems: 'center', gap: 12,
+          '--feed': 'var(--teal)',
+        } as React.CSSProperties}>
+          <span className="feed-glyph" aria-hidden>◈</span>
+          <span style={{ letterSpacing: 0.5 }}>SPREADING · within {SPREAD_RANGE_KM}km — choose a cluster</span>
           <button
             onClick={() => setSpreading(false)}
-            style={{
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 4, padding: '2px 8px', color: 'var(--text)', cursor: 'pointer', fontSize: 11,
-            }}
+            className="console-key console-key--ghost"
+            style={{ padding: '3px 9px', fontSize: 9 }}
           >
             Cancel
           </button>
