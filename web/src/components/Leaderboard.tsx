@@ -54,7 +54,7 @@ export default function Leaderboard({ version }: LeaderboardProps) {
                 style={{
                   flex: 1, padding: '4px 0', fontSize: 11, fontWeight: 600, cursor: 'pointer',
                   borderRadius: 6, border: `1px solid ${kind === b.kind ? 'var(--teal)' : 'var(--border)'}`,
-                  background: kind === b.kind ? 'rgba(43,191,168,0.12)' : 'transparent',
+                  background: kind === b.kind ? 'rgba(255, 154, 74,0.12)' : 'transparent',
                   color: kind === b.kind ? 'var(--teal)' : 'var(--text-dim)',
                 }}
               >

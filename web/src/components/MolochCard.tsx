@@ -60,10 +60,10 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
       <div className="eyebrow" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2, marginBottom: 6 }}>
         The Crawling Chaos · a bargain
       </div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, color: 'var(--text)', marginBottom: 10 }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600, fontSize: 27, lineHeight: 1.1, color: 'var(--bone)', marginBottom: 10 }}>
         {bargain.title}
       </div>
-      <div style={{ fontSize: 12.5, fontStyle: 'italic', color: 'var(--text-dim)', lineHeight: 1.55, marginBottom: 14 }}>
+      <div className="liturgy" style={{ fontSize: 16, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
         “{bargain.flavor}”
       </div>
 

@@ -44,7 +44,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
 
     // Ghost guide of unbound edges, fading with mastery.
     if (guideOpacity > 0) {
-      ctx.strokeStyle = `rgba(31, 158, 143, ${guideOpacity})`
+      ctx.strokeStyle = `rgba(255, 154, 74, ${guideOpacity})`
       ctx.lineWidth = 2
       ctx.setLineDash([6, 6])
       for (const [a, b] of graph.edges) {
@@ -56,7 +56,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     }
 
     // Bound edges, solid gold.
-    ctx.strokeStyle = '#c9a227'
+    ctx.strokeStyle = '#f5b942'
     ctx.lineWidth = 3
     for (const [a, b] of graph.edges) {
       if (!boundRef.current.has(edgeKey(a, b))) continue
@@ -75,7 +75,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
       const lit = bound.has(i) || i === fromNodeRef.current
       ctx.beginPath()
       ctx.arc(x, y, lit ? 7 : 5, 0, Math.PI * 2)
-      ctx.fillStyle = lit ? `rgba(201, 162, 39, ${dotOpacity})` : `rgba(31, 158, 143, ${dotOpacity})`
+      ctx.fillStyle = lit ? `rgba(245, 185, 66, ${dotOpacity})` : `rgba(255, 154, 74, ${dotOpacity})`
       ctx.fill()
     })
   }, [graph, guideOpacity, nodePx])
@@ -89,7 +89,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     // In-progress drag: a gold thread from the start-node to the pointer.
     if (drawingRef.current && fromNodeRef.current >= 0 && livePtRef.current) {
       const p = nodePx(fromNodeRef.current)
-      ctx.strokeStyle = 'rgba(201, 162, 39, 0.6)'
+      ctx.strokeStyle = 'rgba(245, 185, 66, 0.6)'
       ctx.lineWidth = 2
       ctx.beginPath(); ctx.moveTo(p.x, p.y)
       ctx.lineTo(livePtRef.current.x, livePtRef.current.y); ctx.stroke()
@@ -177,8 +177,8 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
       const t = Math.min(1, (ts - startTs) / DURATION)
       ctx.clearRect(0, 0, SIZE, SIZE)
       drawBackdrop(ctx)
-      ctx.strokeStyle = `rgba(255, 215, 106, ${0.4 + 0.6 * t})`
-      ctx.shadowColor = 'rgba(255, 215, 106, 0.9)'
+      ctx.strokeStyle = `rgba(255, 212, 112, ${0.4 + 0.6 * t})`
+      ctx.shadowColor = 'rgba(255, 212, 112, 0.9)'
       ctx.shadowBlur = 6 + 14 * t
       ctx.lineWidth = 4
       ctx.lineCap = 'round'
@@ -202,7 +202,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <div style={{ textAlign: 'center' }}>
-          <div className="eyebrow" style={{ color: 'var(--crimson)', fontSize: 20, letterSpacing: 3, textShadow: '0 0 18px rgba(207,53,80,0.4)' }}>
+          <div className="eyebrow" style={{ color: 'var(--crimson)', fontSize: 20, letterSpacing: 3, textShadow: '0 0 18px rgba(255, 59, 78,0.4)' }}>
             BIND {FAMILY_PROMPT_NAME[exploit.family].toUpperCase()}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
@@ -220,7 +220,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
           style={{
             width: SIZE, height: SIZE, touchAction: 'none',
             borderRadius: 12, border: '1px solid var(--border)',
-            background: 'radial-gradient(circle at 50% 50%, rgba(31,158,143,0.06), rgba(6,9,16,0.9))',
+            background: 'radial-gradient(circle at 50% 50%, rgba(255, 154, 74,0.06), rgba(6,9,16,0.9))',
             cursor: 'crosshair',
           }}
         />

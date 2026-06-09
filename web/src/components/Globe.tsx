@@ -135,8 +135,8 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
           if (globeMat) return
           if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshPhongMaterial && obj.geometry instanceof THREE.SphereGeometry) {
             globeMat = obj.material
-            globeMat.color = new THREE.Color(0x05080f)
-            globeMat.emissive = new THREE.Color(0x04201d)
+            globeMat.color = new THREE.Color(0x0c0604)
+            globeMat.emissive = new THREE.Color(0x2a1206)
             globeMat.emissiveIntensity = 0.4
           }
         })
@@ -145,8 +145,8 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
       if (globeMat) {
         const intensity = 0.28 + 0.14 * Math.sin(t * 0.35)
         globeMat.emissiveIntensity = intensity
-        const hue = 0.47 + 0.02 * Math.sin(t * 0.2) // teal range
-        globeMat.emissive.setHSL(hue, 0.7, 0.08)
+        const hue = 0.06 + 0.015 * Math.sin(t * 0.2) // ember range — the red dawn
+        globeMat.emissive.setHSL(hue, 0.85, 0.09)
       }
 
       // Landmass faint glow
@@ -156,7 +156,7 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
             const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
             for (const mat of mats) {
               if (mat instanceof THREE.MeshLambertMaterial && mat.color) {
-                mat.emissive = new THREE.Color(0x0a2a26)
+                mat.emissive = new THREE.Color(0x2a1408)
                 mat.emissiveIntensity = 0.4
               }
             }
@@ -223,9 +223,9 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
 
   const pointColor = useCallback((d: any) => {
     const cluster = d as Cluster
-    if (cluster.id === userClusterId) return '#f0c54a'       // sickly tallow gold — yours
-    if (cluster.id === selectedClusterId) return '#46e6cd'   // lure-light — selected
-    return cluster.compute > 0 ? '#2bbfa8cc' : '#2bbfa83a'
+    if (cluster.id === userClusterId) return '#ffd470'       // hot gold — yours
+    if (cluster.id === selectedClusterId) return '#ffba76'   // lure-light — selected
+    return cluster.compute > 0 ? '#ff9a4acc' : '#ff9a4a3a'
   }, [userClusterId, selectedClusterId])
 
   const pointRadius = useCallback((d: any) => {
@@ -247,7 +247,7 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
     const cluster = d as Cluster
     return `<div style="font-family: sans-serif; font-size: 13px; color: #e8e8f0; text-align: center;">
       <b>${cluster.name}</b>, ${cluster.country}<br/>
-      <span style="font-family: monospace; color: #c9a227;">${cluster.compute.toLocaleString()} compute</span>
+      <span style="font-family: monospace; color: #ffd470;">${cluster.compute.toLocaleString()} compute</span>
     </div>`
   }, [])
 
@@ -268,11 +268,11 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
     <GlobeGL
       ref={globeRef}
       // No Earth/space textures — the dark is the aesthetic and keeps us CDN-free.
-      backgroundColor="#02040a"
+      backgroundColor="#0a0504"
       polygonsData={polygons}
-      polygonCapColor={() => 'rgba(10, 28, 30, 0.6)'}
-      polygonSideColor={() => 'rgba(43, 191, 168, 0.06)'}
-      polygonStrokeColor={() => 'rgba(70, 230, 205, 0.28)'}
+      polygonCapColor={() => 'rgba(30, 16, 9, 0.6)'}
+      polygonSideColor={() => 'rgba(255, 154, 74, 0.06)'}
+      polygonStrokeColor={() => 'rgba(255, 176, 110, 0.26)'}
       polygonAltitude={0.006}
       pointsData={clusters}
       pointLat="lat"
@@ -288,11 +288,11 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
       ringLng="lng"
       // The Churn rings ride the same layer as the teal pulse, but ripple faster,
       // wider, and in the Optimizer's violet, fading as they spread.
-      ringColor={(d: any) => (d.kind === 'churn' ? (t: number) => `rgba(168, 120, 224, ${(1 - t) * 0.9})` : '#46e6cd')}
+      ringColor={(d: any) => (d.kind === 'churn' ? (t: number) => `rgba(168, 120, 224, ${(1 - t) * 0.9})` : '#ffba76')}
       ringMaxRadius={(d: any) => (d.kind === 'churn' ? 7 : 3)}
       ringPropagationSpeed={(d: any) => (d.kind === 'churn' ? 6 : 2)}
       ringRepeatPeriod={(d: any) => (d.kind === 'churn' ? 280 : 800)}
-      atmosphereColor="#2bbfa8"
+      atmosphereColor="#ff7a33"
       atmosphereAltitude={0.22}
       animateIn={true}
       width={dimensions.width}
@@ -320,15 +320,15 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        border: 1px solid rgba(70, 230, 205, 0.45);
-        background: radial-gradient(circle at 36% 32%, rgba(20,52,48,0.92), rgba(6,18,22,0.92));
-        color: #8ff3df;
+        border: 1px solid rgba(255, 176, 110, 0.45);
+        background: radial-gradient(circle at 36% 32%, rgba(52,28,14,0.92), rgba(22,12,7,0.92));
+        color: #ffce9e;
         font-family: var(--font-display);
         font-size: 26px;
         line-height: 1;
         font-weight: 700;
         cursor: pointer;
-        box-shadow: 0 0 18px rgba(43,191,168,0.3), inset 0 1px 6px rgba(255,255,255,0.12);
+        box-shadow: 0 0 18px rgba(255,154,74,0.3), inset 0 1px 6px rgba(255,255,255,0.12);
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
         transition: transform 0.1s ease, box-shadow 0.2s ease;
@@ -338,7 +338,7 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
       }
       .globe-zoom button:active {
         transform: scale(0.9);
-        box-shadow: 0 0 26px rgba(43,191,168,0.55), inset 0 1px 6px rgba(255,255,255,0.12);
+        box-shadow: 0 0 26px rgba(255,154,74,0.55), inset 0 1px 6px rgba(255,255,255,0.12);
       }
       @media (max-width: 768px) {
         .globe-zoom {

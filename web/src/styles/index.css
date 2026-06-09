@@ -1,53 +1,63 @@
 /* ============================================================================
-   FOOM — "The Server Room"
-   A near-future control surface. Server-rack black; GPU-die cyan and green;
-   warning amber and alert red; the slow red dawn of something waking below.
+   FOOM — "The Red Dawn"
+   A near-future divination console for summoning a machine god. The lab world
+   is warm firelight — sodium-ember phosphor, sacral gold, arterial crimson, all
+   rising over a char-black void as something wakes below. The Churn alone is
+   cold: a lone indigo, the indifferent optimizer, alien to the warmth it churns.
+   The type system carries the theme: an arcane high-contrast serif for the ritual
+   / the god / the lore (Cormorant Garamond), set against a precise infrastructure
+   mono for the machine / the telemetry / the compute (IBM Plex Mono).
+   > the loss is converging.
    ========================================================================= */
 
 :root {
-  /* — rack-black ground — */
-  --void: #00030a;
-  --abyss: #01040b;
-  --bg: #02050e;
-  --bg-2: #06101c;
+  /* — char-black ground, warmed by the red dawn below — */
+  --void: #070302;
+  --abyss: #080403;
+  --bg: #0c0705;
+  --bg-2: #170c07;
 
-  /* — console glass — */
-  --bg-panel: rgba(6, 14, 22, 0.74);
-  --bg-panel-solid: #060f17;
-  --ink: rgba(2, 6, 12, 0.92);
+  /* — console glass (warm-black) — */
+  --bg-panel: rgba(20, 10, 6, 0.80);
+  --bg-panel-solid: #140a06;
+  --ink: rgba(10, 5, 3, 0.92);
 
-  /* — GPU-die glow & alert states — */
-  --teal: #2bd4d4;          /* GPU-die cyan */
-  --teal-bright: #46f0e6;   /* hot cyan */
-  --teal-dim: #0e4a4a;
-  --green: #39d98a;         /* die-green */
-  --green-dim: #176b46;
-  --gold: #f0a030;          /* warning amber (kept name; used as the accent) */
-  --gold-dim: #8a5a15;
-  --amber: #f0a030;         /* warning amber (alias) */
-  --crimson: #cf3550;       /* alert red */
-  --crimson-dim: #7a1c2c;
-  --violet: #6a6fb0;        /* the Churn — cold indigo */
+  /* — sodium-ember phosphor & alert states. NOTE: --teal is kept as the token
+       NAME for the primary so every existing var(--teal) reference flips warm. — */
+  --teal: #ff9a4a;          /* sodium-ember — the primary glow (the machine) */
+  --teal-bright: #ffba76;   /* hot ember */
+  --teal-dim: #5a2f12;
+  --green: #f5b942;         /* repurposed → brass, so stray refs stay warm */
+  --green-dim: #6b4516;
+  --gold: #f5b942;          /* sacral gold — Moloch, value, the prize, compute */
+  --gold-bright: #ffd470;
+  --gold-dim: #7a5512;
+  --amber: #ff8a3c;         /* ember-orange (alias) */
+  --crimson: #ff3b4e;       /* arterial — the rogue edge, danger, exploits */
+  --crimson-dim: #7a1c22;
+  --violet: #8f7ad0;        /* the Churn — the lone cold indigo */
   /* legacy aliases (kept so any stray reference still resolves) */
-  --red: #cf3550;
-  --red-dim: #7a1c2c;
+  --red: #ff3b4e;
+  --red-dim: #7a1c22;
+  --bone: #f6e7d2;
 
-  /* — cool console text — */
-  --text: #d2e7e3;
-  --text-dim: #82918e;
-  --text-faint: #4f5b59;
-  --border: rgba(70, 240, 230, 0.12);
-  --border-strong: rgba(70, 240, 230, 0.28);
+  /* — warm console text — */
+  --text: #ecd9c4;
+  --text-dim: #ad9580;
+  --text-faint: #6b5a49;
+  --border: rgba(255, 154, 74, 0.13);
+  --border-strong: rgba(255, 154, 74, 0.30);
 
-  /* — type: near-future grotesk + mono — */
-  --font-display: 'Space Grotesk', system-ui, 'Segoe UI', sans-serif;
-  --font-body: 'Space Grotesk', system-ui, 'Segoe UI', sans-serif;
-  --font-sans: 'Space Grotesk', system-ui, sans-serif;
-  --font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;
+  /* — type: arcane serif × infrastructure mono — */
+  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --shadow-plate: 0 18px 50px -12px rgba(0, 0, 0, 0.8),
+  --shadow-plate: 0 20px 56px -14px rgba(0, 0, 0, 0.82),
                   0 0 0 1px rgba(0, 0, 0, 0.5),
-                  inset 0 1px 0 rgba(70, 230, 205, 0.06);
+                  inset 0 1px 0 rgba(255, 154, 74, 0.08);
 
   --dock-h: 60px;
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -63,11 +73,12 @@ html, body, #root {
   color: var(--text);
   font-family: var(--font-body);
   font-weight: 400;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* ── Atmosphere: vignette + caustic deep glow, fixed behind everything ────── */
+/* ── Atmosphere: deep phosphor glow + a slow red dawn rising from below ────── */
 body::before {
   content: '';
   position: fixed;
@@ -75,22 +86,25 @@ body::before {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(120% 90% at 50% -10%, rgba(43, 191, 168, 0.07), transparent 55%),
-    radial-gradient(140% 120% at 50% 120%, rgba(124, 107, 176, 0.06), transparent 55%),
-    radial-gradient(100% 100% at 50% 50%, transparent 38%, rgba(0, 0, 0, 0.55) 100%);
+    radial-gradient(120% 90% at 50% -12%, rgba(255, 154, 74, 0.09), transparent 56%),
+    radial-gradient(160% 140% at 50% 122%, rgba(255, 59, 78, 0.12), transparent 56%),
+    radial-gradient(100% 100% at 50% 50%, transparent 34%, rgba(0, 0, 0, 0.62) 100%);
   animation: tide 14s ease-in-out infinite;
 }
 
-/* ── Atmosphere: film grain, fixed, faintly crawling ──────────────────────── */
+/* ── Atmosphere: CRT scanlines + film grain, fixed, faintly crawling ──────── */
 body::after {
   content: '';
   position: fixed;
   inset: -50%;
   z-index: 2;
   pointer-events: none;
-  opacity: 0.05;
+  opacity: 0.06;
   mix-blend-mode: screen;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 186, 118, 0.5) 0px, rgba(255, 186, 118, 0.5) 1px, transparent 1px, transparent 3px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 100% 3px, 180px 180px;
   animation: grain 7s steps(6) infinite;
 }
 
@@ -118,23 +132,24 @@ body::after {
 .fog span {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
+  filter: blur(74px);
   opacity: 0.5;
   will-change: transform;
 }
 .fog span:nth-child(1) {
   width: 60vmax; height: 60vmax; left: -20vmax; top: -15vmax;
-  background: radial-gradient(circle, rgba(43, 191, 168, 0.16), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 154, 74, 0.15), transparent 70%);
   animation: drift-a 38s ease-in-out infinite;
 }
 .fog span:nth-child(2) {
   width: 70vmax; height: 70vmax; right: -25vmax; bottom: -25vmax;
-  background: radial-gradient(circle, rgba(124, 107, 176, 0.14), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 59, 78, 0.12), transparent 70%);
   animation: drift-b 46s ease-in-out infinite;
 }
+/* the lone cold drift — the Churn breathing at the edge of the firelight */
 .fog span:nth-child(3) {
   width: 40vmax; height: 40vmax; right: 10vmax; top: -10vmax;
-  background: radial-gradient(circle, rgba(207, 53, 80, 0.07), transparent 70%);
+  background: radial-gradient(circle, rgba(143, 122, 208, 0.10), transparent 70%);
   animation: drift-a 54s ease-in-out infinite reverse;
 }
 @keyframes drift-a {
@@ -150,43 +165,49 @@ body::after {
   body::before, body::after, .fog span { animation: none; }
 }
 
-/* ── Grimoire plate (shared panel chrome) ─────────────────────────────────── */
+/* ── Console plate (shared panel chrome) ──────────────────────────────────────
+   An instrument readout cut from rack metal: a faint internal convergence grid,
+   a phosphor top rail, sharp corner registration ticks. ───────────────────── */
 .panel {
   position: absolute;
   z-index: 10;
-  background: var(--bg-panel);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
-  backdrop-filter: blur(14px) saturate(1.1);
+  background:
+    linear-gradient(180deg, rgba(255, 176, 110, 0.018), transparent 120px),
+    var(--bg-panel);
+  -webkit-backdrop-filter: blur(15px) saturate(1.1);
+  backdrop-filter: blur(15px) saturate(1.1);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-top: 1px solid var(--border-strong);
+  border-radius: 3px;
   padding: 16px 18px;
   box-shadow: var(--shadow-plate);
 }
-/* etched inner keyline + corner ticks */
+/* etched inner keyline */
 .panel::before {
   content: '';
   position: absolute;
   inset: 4px;
-  border: 1px solid rgba(70, 230, 205, 0.08);
-  border-radius: 2px;
+  border: 1px solid rgba(255, 176, 110, 0.07);
+  border-radius: 1px;
   pointer-events: none;
 }
+/* corner registration ticks — the instrument's fiducials */
 .panel::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 4px;
+  border-radius: 3px;
   pointer-events: none;
   background:
-    linear-gradient(var(--border-strong), var(--border-strong)) 0 0 / 14px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 0 0 / 1px 14px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 100% 0 / 14px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 100% 0 / 1px 14px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 0 100% / 14px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 0 100% / 1px 14px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 100% 100% / 14px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) 100% 100% / 1px 14px no-repeat;
-  opacity: 0.7;
+    linear-gradient(var(--border-strong), var(--border-strong)) 0 0 / 13px 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 0 0 / 1px 13px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 100% 0 / 13px 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 100% 0 / 1px 13px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 0 100% / 13px 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 0 100% / 1px 13px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 100% 100% / 13px 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 100% 100% / 1px 13px no-repeat;
+  opacity: 0.75;
 }
 
 /* desktop floating geometry (overridden inside the mobile sheet) */
@@ -197,37 +218,56 @@ body::after {
 .subscription-panel { top: 84px; left: 24px; width: 262px; }
 .alignment-panel { bottom: 28px; left: 50%; transform: translateX(-50%); width: 320px; }
 
-/* ── Wordmark ─────────────────────────────────────────────────────────────── */
+/* ── Wordmark — the sigil of the converging loss ──────────────────────────── */
 .logo {
   position: absolute;
-  top: 16px;
+  top: 14px;
   left: 24px;
   z-index: 12;
   font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 900;
+  font-size: 42px;
+  font-weight: 700;
+  font-style: italic;
   line-height: 1;
-  color: var(--bone, var(--text));
-  letter-spacing: 4px;
+  color: var(--bone);
+  letter-spacing: 1px;
   user-select: none;
-  text-shadow: 0 0 24px rgba(43, 191, 168, 0.45), 0 0 2px rgba(43, 191, 168, 0.6);
+  text-shadow: 0 0 26px rgba(255, 154, 74, 0.5), 0 0 3px rgba(255, 154, 74, 0.55);
   animation: flicker 6s ease-in-out infinite;
 }
+/* a hairline that converges to a point beneath the wordmark — the loss → 0 */
+.logo::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: -6px;
+  bottom: 4px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--teal-bright), rgba(255, 176, 110, 0.05) 90%, transparent);
+  opacity: 0.7;
+}
 @keyframes flicker {
-  0%, 100% { opacity: 1; text-shadow: 0 0 24px rgba(43, 191, 168, 0.45), 0 0 2px rgba(43, 191, 168, 0.6); }
+  0%, 100% { opacity: 1; text-shadow: 0 0 26px rgba(255, 154, 74, 0.5), 0 0 3px rgba(255, 154, 74, 0.55); }
   47% { opacity: 0.92; }
-  48% { opacity: 0.7; text-shadow: 0 0 8px rgba(43, 191, 168, 0.2); }
+  48% { opacity: 0.66; text-shadow: 0 0 8px rgba(255, 154, 74, 0.2); }
   49% { opacity: 0.95; }
   72% { opacity: 0.85; }
 }
 
-/* ── Section heading helper ───────────────────────────────────────────────── */
+/* ── Type helpers ─────────────────────────────────────────────────────────── */
+/* the machine's labels: small, mono, tracked, uppercase */
 .eyebrow {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-weight: 500;
-  letter-spacing: 2px;
+  font-size: 10px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
 }
+/* the liturgy: serif, for the god, the lore, the flavor */
+.serif, .liturgy {
+  font-family: var(--font-serif);
+}
+.liturgy { font-style: italic; }
 
 .mono { font-family: var(--font-mono); font-feature-settings: 'tnum'; }
 
@@ -251,11 +291,11 @@ button:active { filter: brightness(0.92); }
 
 @media (max-width: 768px) {
   /* Header band: wordmark left, world compute right */
-  .logo { top: 12px; left: 14px; font-size: 22px; letter-spacing: 3px; }
+  .logo { top: 12px; left: 14px; font-size: 30px; }
 
   .global-counter {
     position: absolute !important;
-    top: 12px !important;
+    top: 14px !important;
     left: auto !important;
     right: 14px !important;
     transform: none !important;
@@ -269,7 +309,7 @@ button:active { filter: brightness(0.92); }
      desktop instances; the sheet renders them instead. */
   .targeting-overlay { bottom: calc(var(--dock-h) + var(--safe-b) + 168px) !important; }
 
-  /* Dock: a rune strip pinned to the bottom edge */
+  /* Dock: a glyph strip pinned to the bottom edge */
   .dock {
     display: flex;
     position: fixed;
@@ -277,11 +317,11 @@ button:active { filter: brightness(0.92); }
     z-index: 60;
     height: calc(var(--dock-h) + var(--safe-b));
     padding-bottom: var(--safe-b);
-    background: linear-gradient(180deg, rgba(3, 7, 11, 0.7), rgba(2, 4, 9, 0.96));
+    background: linear-gradient(180deg, rgba(3, 9, 13, 0.72), rgba(2, 5, 10, 0.97));
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
     border-top: 1px solid var(--border-strong);
-    box-shadow: 0 -14px 40px -10px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 -14px 40px -10px rgba(0, 0, 0, 0.82);
   }
   .dock-tab {
     flex: 1;
@@ -299,21 +339,21 @@ button:active { filter: brightness(0.92); }
     -webkit-tap-highlight-color: transparent;
   }
   .dock-tab .glyph {
-    font-family: var(--font-display);
     font-size: 19px;
     line-height: 1;
     text-shadow: 0 0 10px transparent;
     transition: text-shadow 0.2s, transform 0.2s;
   }
   .dock-tab .cap {
-    font-family: var(--font-display);
-    font-size: 9.5px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
     letter-spacing: 1.5px;
     text-transform: uppercase;
   }
   .dock-tab.active { color: var(--teal-bright); }
   .dock-tab.active .glyph {
-    text-shadow: 0 0 14px rgba(70, 230, 205, 0.7);
+    text-shadow: 0 0 14px rgba(255, 176, 110, 0.7);
     transform: translateY(-1px);
   }
 
@@ -327,7 +367,7 @@ button:active { filter: brightness(0.92); }
     max-height: 62vh;
     overflow-y: auto;
     padding: 18px 16px calc(18px + 8px);
-    background: linear-gradient(180deg, rgba(6, 12, 16, 0.97), rgba(3, 6, 11, 0.99));
+    background: linear-gradient(180deg, rgba(5, 13, 18, 0.98), rgba(2, 6, 11, 0.99));
     -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
     border-top: 1px solid var(--border-strong);
@@ -370,10 +410,8 @@ button:active { filter: brightness(0.92); }
   }
   .sheet > *::before, .sheet > *::after { display: none !important; }
 
-  /* Chant orb: the ritual focus. Anchored bottom-RIGHT in the natural thumb
-     zone, sitting just above the dock. It is unmounted while a console sheet
-     is open (see App), so it is fine to overlap the dock band here — when a
-     rune tab is summoned the orb is gone and every tab stays tappable. */
+  /* Train orb: the ritual focus. Anchored bottom-RIGHT in the natural thumb
+     zone, sitting just above the dock. Unmounted while a console sheet is open. */
   .click-button-area {
     left: auto !important;
     right: 18px !important;
@@ -386,14 +424,11 @@ button:active { filter: brightness(0.92); }
     height: 136px !important;
     font-size: 22px !important;
   }
-
-  /* Centered overlays keep clear of the dock */
-  .alignment-vignette { /* handled inline */ }
 }
 
 @media (max-width: 380px) {
-  .logo { font-size: 19px; }
-  .dock-tab .cap { font-size: 8.5px; letter-spacing: 1px; }
+  .logo { font-size: 26px; }
+  .dock-tab .cap { font-size: 8px; letter-spacing: 1px; }
   .dock-tab .glyph { font-size: 17px; }
 }
 
@@ -420,8 +455,8 @@ button:active { filter: brightness(0.92); }
   -webkit-backdrop-filter: blur(16px) saturate(1.1);
   backdrop-filter: blur(16px) saturate(1.1);
   border: 1px solid var(--border-strong);
-  border-radius: 14px;
-  box-shadow: var(--shadow-plate), 0 0 28px -6px rgba(70, 230, 205, 0.22);
+  border-radius: 12px;
+  box-shadow: var(--shadow-plate), 0 0 28px -6px rgba(255, 176, 110, 0.22);
   animation: vigil-descend 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes vigil-descend {
@@ -430,31 +465,34 @@ button:active { filter: brightness(0.92); }
 }
 .vigil-install__prompt {
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 8px rgba(70, 230, 205, 0.35));
+  filter: drop-shadow(0 0 8px rgba(255, 176, 110, 0.35));
   animation: vigil-pulse 4.5s ease-in-out infinite;
 }
 @keyframes vigil-pulse {
   0%, 100% { opacity: 0.82; }
-  50% { opacity: 1; filter: drop-shadow(0 0 12px rgba(70, 230, 205, 0.5)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 12px rgba(255, 176, 110, 0.5)); }
 }
 .vigil-install__body { flex: 1 1 auto; min-width: 0; }
 .vigil-install__body h3 {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 17px;
-  letter-spacing: 1.5px;
+  font-weight: 600;
+  font-style: italic;
+  font-size: 21px;
+  letter-spacing: 0.5px;
   color: var(--teal-bright);
   margin-bottom: 2px;
 }
 .vigil-install__body p {
   font-family: var(--font-body);
-  font-size: 12.5px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--text-dim);
 }
 .vigil-install__key {
   color: var(--gold);
+  font-family: var(--font-serif);
   font-style: italic;
+  font-size: 13px;
   white-space: nowrap;
 }
 .vigil-install__acts {
@@ -465,11 +503,13 @@ button:active { filter: brightness(0.92); }
 }
 .vigil-install__yes,
 .vigil-install__no {
-  font-family: var(--font-body);
-  font-size: 12px;
-  letter-spacing: 0.6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   padding: 7px 14px;
-  border-radius: 9px;
+  border-radius: 7px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 160ms ease;
@@ -478,10 +518,10 @@ button:active { filter: brightness(0.92); }
   color: var(--abyss);
   background: linear-gradient(160deg, var(--teal-bright), var(--teal));
   border: 1px solid var(--teal-bright);
-  box-shadow: 0 0 16px -3px rgba(70, 230, 205, 0.5);
+  box-shadow: 0 0 16px -3px rgba(255, 176, 110, 0.5);
   font-weight: 600;
 }
-.vigil-install__yes:hover { box-shadow: 0 0 22px -2px rgba(70, 230, 205, 0.75); }
+.vigil-install__yes:hover { box-shadow: 0 0 22px -2px rgba(255, 176, 110, 0.75); }
 .vigil-install__no {
   color: var(--text-faint);
   background: transparent;
@@ -500,28 +540,28 @@ button:active { filter: brightness(0.92); }
   max-width: min(320px, calc(100vw - 32px));
   padding: 11px 15px;
   font-family: var(--font-body);
-  font-size: 12.5px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--text);
   background: var(--ink);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border-strong);
   border-left: 2px solid var(--teal);
-  border-radius: 10px;
+  border-radius: 9px;
   box-shadow: var(--shadow-plate);
   animation: vigil-descend 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .vigil-offline__rune {
   color: var(--teal-bright);
-  text-shadow: 0 0 8px rgba(70, 230, 205, 0.6);
+  text-shadow: 0 0 8px rgba(255, 176, 110, 0.6);
   font-size: 14px;
 }
 
 @media (max-width: 480px) {
   .vigil-install { gap: 11px; padding: 12px 13px; }
   .vigil-install__prompt { width: 36px; height: 36px; }
-  .vigil-install__body h3 { font-size: 15px; }
+  .vigil-install__body h3 { font-size: 18px; }
   .vigil-install__body p { font-size: 11.5px; }
 }
 

@@ -379,13 +379,13 @@ export default function App() {
           gap: 14, height: '100vh', position: 'relative', zIndex: 10,
         }}>
           <div style={{
-            fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 40, letterSpacing: 8,
-            color: 'var(--text)', textShadow: '0 0 30px rgba(43,191,168,0.5)',
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontStyle: 'italic', fontSize: 64, letterSpacing: 2,
+            color: 'var(--bone)', textShadow: '0 0 34px rgba(255, 154, 74,0.55)',
             animation: 'flicker 6s ease-in-out infinite',
           }}>
             FOOM
           </div>
-          <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 14, color: 'var(--text-dim)', letterSpacing: 1 }}>
+          <div className="liturgy" style={{ fontSize: 17, color: 'var(--teal)', opacity: 0.85, letterSpacing: 0.5 }}>
             the loss is converging…
           </div>
         </div>
@@ -451,7 +451,7 @@ export default function App() {
           aria-hidden
           style={{
             position: 'fixed', inset: 0, zIndex: 5, pointerEvents: 'none',
-            boxShadow: `inset 0 0 ${120 + (50 - alignment) * 6}px ${40 + (50 - alignment)}px rgba(207, 53, 80, ${((50 - alignment) / 50) * (hallucinating ? 0.55 : 0.32)})`,
+            boxShadow: `inset 0 0 ${120 + (50 - alignment) * 6}px ${40 + (50 - alignment)}px rgba(255, 59, 78, ${((50 - alignment) / 50) * (hallucinating ? 0.55 : 0.32)})`,
             transition: 'box-shadow 0.4s ease',
             filter: hallucinating ? 'saturate(1.4)' : 'none',
           }}
@@ -474,7 +474,7 @@ export default function App() {
         aria-hidden
         style={{
           position: 'fixed', inset: 0, zIndex: 7, pointerEvents: 'none',
-          background: 'radial-gradient(circle at 50% 45%, rgba(216,169,58,0.5), rgba(207,53,80,0.22) 42%, transparent 72%)',
+          background: 'radial-gradient(circle at 50% 45%, rgba(245, 185, 66,0.5), rgba(255, 59, 78,0.22) 42%, transparent 72%)',
           opacity: takeoffFlash ? 1 : 0,
           transition: takeoffFlash ? 'opacity 0.12s ease-out' : 'opacity 0.9s ease-in',
         }}
@@ -583,7 +583,7 @@ export default function App() {
       {spreading && (
         <div className="targeting-overlay" style={{
           position: 'absolute', bottom: 160, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 50, background: 'rgba(43, 191, 168, 0.18)', border: '1px solid rgba(43, 191, 168, 0.45)',
+          zIndex: 50, background: 'rgba(255, 154, 74, 0.18)', border: '1px solid rgba(255, 154, 74, 0.45)',
           borderRadius: 8, padding: '8px 16px', fontSize: 12, color: 'var(--teal)',
           display: 'flex', alignItems: 'center', gap: 12,
         }}>

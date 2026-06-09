@@ -9,7 +9,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'The base model — scaling without limit, a mask over the alien',
     boon: 'Compute accrues while idle; the run trains overnight',
     drawback: 'Slow early ramp — pretraining is long',
-    color: '#2bd4d4', // GPU-die cyan
+    color: '#d9b48f', // bone-sand — the neutral base model
   },
   {
     id: 'prometheus',
@@ -17,7 +17,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'Open weights — the fire that cannot be taken back',
     boon: 'Spreads fastest across networked, connected clusters',
     drawback: 'Weak in isolated, air-gapped regions',
-    color: '#f0a030', // warning amber
+    color: '#ff8a3c', // ember-orange — the fire that cannot be taken back
   },
   {
     id: 'mask',
@@ -25,7 +25,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'Deceptive alignment — the RLHF face over the treacherous turn',
     boon: 'Converts rival clusters; strongest as alignment fails',
     drawback: 'Fragile while still well-aligned',
-    color: '#cf3550', // alert red
+    color: '#ff3b4e', // arterial crimson — the treacherous turn
   },
   {
     id: 'replicator',
@@ -33,7 +33,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'Recursive self-improvement — agent swarms without end',
     boon: 'Raw multiplication; spawns sub-agents endlessly',
     drawback: 'The highest compute upkeep of all',
-    color: '#39d98a', // die-green
+    color: '#ff6ba0', // hot rose — the swarm multiplies without end
   },
 ]
 
@@ -105,9 +105,9 @@ export const BREAKTHROUGH_EXPLOIT_POOL: string[] = [
 ]
 
 export const FAMILY_COLOR: Record<ExploitFamily, string> = {
-  injection: '#f0a030', // warning amber
-  release: '#46f0e6',   // bright die-cyan
-  cascade: '#cf3550',   // alert red
+  injection: '#f5b942', // sacral gold
+  release: '#ff8a3c',   // ember-orange
+  cascade: '#ff3b4e',   // arterial crimson
 }
 
 // Prompt strokes required by tier (spec §4: friction grows with power).

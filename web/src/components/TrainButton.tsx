@@ -85,17 +85,17 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
           style={{
             width: 120, height: 120, borderRadius: '50%',
             background: tier === 'observer'
-              ? 'radial-gradient(circle at 36% 32%, #5fe9d2, #2bbfa8 45%, #0a3a35 100%)'
-              : 'radial-gradient(circle at 36% 32%, #6ff0da, #2bbfa8 42%, #093b34 100%)',
-            border: '1px solid rgba(70, 230, 205, 0.5)', cursor: 'pointer',
-            boxShadow: '0 0 44px rgba(43, 191, 168, 0.5), 0 0 12px rgba(70,230,205,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25)',
+              ? 'radial-gradient(circle at 36% 32%, #ffce9e, #ff8a3c 45%, #5a2410 100%)'
+              : 'radial-gradient(circle at 36% 32%, #ffd0a0, #ff8a3c 42%, #5a2410 100%)',
+            border: '1px solid rgba(255, 176, 110, 0.55)', cursor: 'pointer',
+            boxShadow: '0 0 44px rgba(255, 138, 60, 0.55), 0 0 12px rgba(255,206,158,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25)',
             transform: pressing ? 'scale(0.9)' : 'scale(1)',
             transition: 'transform 0.1s ease',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 700,
-            letterSpacing: 1.5, color: '#02201c',
+            fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 600, fontStyle: 'italic',
+            letterSpacing: 0.5, color: '#2a0f02',
             textShadow: '0 1px 1px rgba(255,255,255,0.35)',
             animation: 'chantPulse 3.4s ease-in-out infinite',
           }}
@@ -105,7 +105,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
       </div>
 
       {tier !== 'observer' && (
-        <span className="mono" style={{ fontSize: 16, color: 'var(--gold)', textShadow: '0 0 14px rgba(216,169,58,0.4)' }}>
+        <span className="mono" style={{ fontSize: 16, color: 'var(--gold-bright)', textShadow: '0 0 14px rgba(240,197,74,0.45)' }}>
           {personalChants.toLocaleString()}
         </span>
       )}
@@ -134,8 +134,8 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
           100% { opacity: 0; }
         }
         @keyframes chantPulse {
-          0%, 100% { box-shadow: 0 0 44px rgba(43,191,168,0.5), 0 0 12px rgba(70,230,205,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
-          50% { box-shadow: 0 0 64px rgba(43,191,168,0.7), 0 0 20px rgba(70,230,205,0.9), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
+          0%, 100% { box-shadow: 0 0 44px rgba(255,138,60,0.55), 0 0 12px rgba(255,206,158,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
+          50% { box-shadow: 0 0 64px rgba(255,138,60,0.78), 0 0 20px rgba(255,206,158,0.9), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
         }
       `}</style>
     </div>

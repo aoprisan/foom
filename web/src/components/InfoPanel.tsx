@@ -151,7 +151,7 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
               onClick={onSpread}
               title="Spread to a nearby cluster — convert the uncommitted, or flip a rival you overpower"
               style={{
-                flex: 1, background: 'rgba(43, 191, 168, 0.08)',
+                flex: 1, background: 'rgba(255, 154, 74, 0.08)',
                 border: '1px solid var(--teal)', borderRadius: 8, padding: '8px 6px',
                 color: 'var(--teal)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
                 display: 'flex', flexDirection: 'column', alignItems: 'center',

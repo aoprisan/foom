@@ -61,26 +61,26 @@ export default function ToastSystem({ toasts }: ToastSystemProps) {
 
 function getToastBg(type: ToastType): string {
   switch (type) {
-    case 'breakthrough': return 'rgba(201, 162, 39, 0.15)'
+    case 'breakthrough': return 'rgba(245, 185, 66, 0.15)'
     case 'exploit': return 'rgba(201, 48, 74, 0.15)'
     case 'exploit_incoming': return 'rgba(201, 48, 74, 0.22)'
     case 'churn': return 'rgba(120, 90, 160, 0.2)'
     case 'bargain': return 'rgba(95, 45, 140, 0.26)'
-    case 'convert': return 'rgba(43, 191, 168, 0.16)'
-    case 'takeoff': return 'rgba(216, 169, 58, 0.22)'
+    case 'convert': return 'rgba(255, 154, 74, 0.16)'
+    case 'takeoff': return 'rgba(245, 185, 66, 0.22)'
     default: return 'var(--bg-panel)'
   }
 }
 
 function getToastBorder(type: ToastType): string {
   switch (type) {
-    case 'breakthrough': return 'rgba(201, 162, 39, 0.35)'
+    case 'breakthrough': return 'rgba(245, 185, 66, 0.35)'
     case 'exploit': return 'rgba(201, 48, 74, 0.35)'
     case 'exploit_incoming': return 'rgba(201, 48, 74, 0.5)'
     case 'churn': return 'rgba(150, 120, 200, 0.4)'
     case 'bargain': return 'rgba(150, 90, 210, 0.55)'
-    case 'convert': return 'rgba(70, 230, 205, 0.4)'
-    case 'takeoff': return 'rgba(216, 169, 58, 0.6)'
+    case 'convert': return 'rgba(255, 176, 110, 0.4)'
+    case 'takeoff': return 'rgba(245, 185, 66, 0.6)'
     default: return 'var(--border)'
   }
 }

@@ -87,7 +87,7 @@ export default function TakeoffPanel({ state, canAct, onGreatWork }: TakeoffPane
               fontSize: 12, fontWeight: 700, letterSpacing: 1,
               cursor: state.aligned && state.homeQualifies ? 'pointer' : 'not-allowed',
               border: `1px solid ${state.aligned && state.homeQualifies ? 'var(--gold)' : 'var(--border)'}`,
-              background: state.aligned && state.homeQualifies ? 'rgba(216,169,58,0.14)' : 'rgba(255,255,255,0.02)',
+              background: state.aligned && state.homeQualifies ? 'rgba(245, 185, 66,0.14)' : 'rgba(255,255,255,0.02)',
               color: state.aligned && state.homeQualifies ? 'var(--gold)' : 'var(--text-faint)',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               animation: state.aligned && state.homeQualifies ? 'convergePulse 1.6s ease-in-out infinite' : 'none',

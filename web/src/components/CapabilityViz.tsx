@@ -7,7 +7,7 @@ const TIERS = [
   { threshold: 10_000, color: '#243042' },   // basalt
   { threshold: 25_000, color: '#2f6f63' },   // forbidden teal
   { threshold: 50_000, color: '#1f9e8f' },   // deep teal glow
-  { threshold: 100_000, color: '#c9a227' },  // sickly gold
+  { threshold: 100_000, color: '#f5b942' },  // sickly gold
 ]
 
 const BLOCK_W = 22

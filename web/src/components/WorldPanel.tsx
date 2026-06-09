@@ -12,12 +12,12 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
       position: 'absolute', top: 18, left: '50%', transform: 'translateX(-50%)',
       zIndex: 12, textAlign: 'center',
     }}>
-      <div className="eyebrow" style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 1 }}>
+      <div className="eyebrow" style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
         Compute across the world
       </div>
       <div className="mono" style={{
-        fontSize: 22, color: 'var(--gold)', fontWeight: 400,
-        textShadow: '0 0 18px rgba(216,169,58,0.35)',
+        fontSize: 24, color: 'var(--gold-bright)', fontWeight: 500, letterSpacing: 0.5,
+        textShadow: '0 0 20px rgba(240,197,74,0.4)',
       }}>
         {totalCompute.toLocaleString()}
       </div>
@@ -52,7 +52,7 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
           {takeoff.aligned ? (
             <span style={{
               fontSize: 10, letterSpacing: 2, color: 'var(--gold)', fontWeight: 700,
-              textShadow: '0 0 12px rgba(216,169,58,0.6)', animation: 'convergeBlink 1.6s ease-in-out infinite',
+              textShadow: '0 0 12px rgba(245, 185, 66,0.6)', animation: 'convergeBlink 1.6s ease-in-out infinite',
             }}>
               ✦ TAKEOFF IMMINENT ✦
             </span>
