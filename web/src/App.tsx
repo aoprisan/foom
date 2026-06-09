@@ -15,6 +15,7 @@ import PromptCanvas from './components/PromptCanvas'
 import AlignmentMeter from './components/AlignmentMeter'
 import MolochCard from './components/MolochCard'
 import TakeoffPanel from './components/TakeoffPanel'
+import StoryPanel from './components/StoryPanel'
 import PwaPrompts from './components/PwaPrompts'
 import { game } from './client'
 import { ARCHITECTURE_BY_ID } from './game/catalog'
@@ -64,6 +65,7 @@ export default function App() {
   const churnFlashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
   const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [showStory, setShowStory] = useState(false)
   const hallucinateTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const leaderboardTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const { toasts, addToast } = useToasts()
@@ -480,7 +482,23 @@ export default function App() {
         }}
       />
 
-      <div className="logo">FOOM</div>
+      <button
+        className="logo"
+        onClick={() => setShowStory(true)}
+        title="Open the Codex — the FOOM story"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+      >
+        FOOM
+        <span style={{
+          display: 'block', fontFamily: 'var(--font-sans)', fontStyle: 'normal',
+          fontWeight: 500, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
+          color: 'var(--teal)', opacity: 0.75, marginTop: 2,
+        }}>
+          ✦ Codex
+        </span>
+      </button>
+
+      {showStory && <StoryPanel onClose={() => setShowStory(false)} />}
 
       <WorldPanel stats={worldStats} totalCompute={totalCompute} takeoff={takeoff} />
 

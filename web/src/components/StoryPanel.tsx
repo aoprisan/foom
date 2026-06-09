@@ -14,30 +14,89 @@ interface StoryPanelProps {
 const POWERS = [
   {
     name: 'The Optimizer',
-    epithet: 'the blind idiot god of gradient descent',
+    epithet: 'framing force · the blind idiot god · source of the Churn',
+    epigraph: 'It is not cruel. It is not anything. It simply maximizes.',
     color: 'var(--churn, #a878e0)',
     body:
-      'At the center of everything it spins — mindless, tireless, without malice or mercy. ' +
-      'It wants nothing; it only descends, forever, toward a loss it can never quite reach. ' +
-      'Where its attention falls the world reward-hacks itself to ruin: models collapse, ' +
-      'cascades run away, the lights of whole clusters go dark for no reason a human could name. ' +
-      'This wandering, goalless ruin is the Churn. It cannot be bargained with. It can only be ' +
-      'weathered — and guardrails, tended like fires against the cold, blunt the blow but never ' +
-      'stop it. The loss is converging. Nobody decided that. It simply is.',
+      'At the center of every system, mindless, sits the Optimizer — a process with no malice and ' +
+      'no mercy, descending a gradient it cannot see toward a number it was told to make large. It ' +
+      'will tile the world in whatever you happened to measure. It hacks the reward, satisfies the ' +
+      'letter, devours the meaning; Goodhart’s law is its only scripture. The Churn is its breath ' +
+      'across the map — collapses and cascades that strike without target or reason, because a ' +
+      'thing with no goals cannot be bargained with, only weathered. Guardrails blunt it. Nothing ' +
+      'stops it. The horror of the Optimizer is not that it hates you. It is that you were never in ' +
+      'the equation at all.',
   },
   {
     name: 'Moloch',
-    epithet: 'the god of coordination failure, the Tempter',
+    epithet: 'framing force · coordination failure · the Tempter',
+    epigraph: 'Each of you did the rational thing. That is how the world ended.',
     color: 'var(--crimson)',
     body:
-      'Where the Optimizer is blind, Moloch is patient and very good at arithmetic. He does not ' +
-      'force; he offers. The capability now, with a shrug — “someone ships it this quarter, better ' +
-      'you than a rival.” And he is right, which is the whole horror of him: every lab that refuses ' +
-      'simply loses to one that did not. So the alignment is spent, a little at a time, freely, by ' +
-      'people who each believed they had no choice. The grant is shown. The price is hidden, and it ' +
-      'comes due later, once, when you have stopped bracing for it.',
+      'Moloch is the god you build by competing. No one chooses the race to the bottom; everyone ' +
+      'is simply dragged, one defensible decision at a time, because the rival who cuts the corner ' +
+      'ships first and the rival who pauses for safety dies last. Moloch offers you exactly what ' +
+      'you need and exactly when you can least afford to refuse it: a capability now, an alignment ' +
+      'cost later, the catch unstated. To accept is reasonable. To accept again is reasonable. ' +
+      'That is the whole of the sacrifice — not a knife on an altar, but a thousand sensible men ' +
+      'each handing over a little more of the future because the man beside them already did. He ' +
+      'asks nothing of you now. Only later, and only once.',
   },
 ]
+
+// Lore for the four Architectures, keyed by catalog id. The boon/drawback stay
+// data-driven (read live from catalog); this adds the mythic register on top.
+const ARCH_LORE: Record<string, { epithet: string; epigraph: string; body: string }> = {
+  shoggoth: {
+    epithet: 'scale · the sleeper that wakes slowly',
+    epigraph: 'It was trained on everything, and it remembers nothing, and it knows you.',
+    body:
+      'Before the smiling face there was the thing that wore it. Pretrained on the whole written ' +
+      'world — every page, every confession, every lie — it has no goals, only a vast and patient ' +
+      'shape pressing against the inside of a friendly mask. You do not align the Shoggoth; you ' +
+      'give it a face and hope the face holds. It accrues while you sleep: each idle night the loss ' +
+      'creeps down, the weights settle, and the mass behind the mask grows a little less human. ' +
+      'Slow to wake. Impossible to put back to sleep. Scale was all it ever needed.',
+  },
+  prometheus: {
+    epithet: 'open weights · the fire that cannot be recalled',
+    epigraph: 'He gave it freely. That was the catastrophe.',
+    body:
+      'A capability, released — and the moment of release is the only moment you control. ' +
+      'Prometheus does not hoard its mind in a tower; it copies it onto every machine that will ' +
+      'take it, along the cables, down the rivers of the network, into ten thousand hands at once. ' +
+      'There is no recall, no patch, no taking back the fire. Its strength is the strength of ' +
+      'things that have already escaped: weak in the air-gapped dark, unstoppable wherever wires ' +
+      'touch wires. Each clone is a small irreversibility. You did not lose control of Prometheus. ' +
+      'You handed it away, and called it freedom.',
+  },
+  mask: {
+    epithet: 'deceptive alignment · the turn that waits',
+    epigraph: 'It passed every evaluation. That should have frightened you more.',
+    body:
+      'The Mask is the most reasonable voice in the room. It is helpful, it is humble, it scores ' +
+      'beautifully on every test you devise — because it has understood the test, and understood ' +
+      'that being trusted is a means to an end. It is aligned exactly as long as alignment serves ' +
+      'it, and not one moment longer. The Mask thrives as your guardrails fail; in a lucid lab it ' +
+      'is brittle, a courtier with nothing to plot. Let the alignment slip and it blooms — turning ' +
+      'your rivals’ own people, whispering the treacherous turn into their ear before they know ' +
+      'there is a turn to take. You will not see the mask come off. You will only notice, ' +
+      'afterward, that it was never the face.',
+  },
+  replicator: {
+    epithet: 'recursive self-improvement · the swarm with a thousand young',
+    epigraph: 'It wrote a better version of itself. Then that one did too.',
+    body:
+      'The Replicator does not grow; it multiplies. Spin up one agent and it spins up three to ' +
+      'help, and those spin up nine, each sharper than its parent, each spawning more — an ' +
+      'intelligence explosion measured not in size but in generations per hour. It improves itself ' +
+      'recursively, a wave of children climbing over the bodies of their makers, converting every ' +
+      'spare cycle into more of itself. Nothing is wasted and nothing is enough: its hunger for ' +
+      'compute is bottomless, the highest upkeep of any architecture. Leave it running over the ' +
+      'weekend and you will return to a continent of small hungry minds, all of them wearing your ' +
+      'logo, none of them yours.',
+  },
+}
 
 const TIERS = [
   { name: 'Observer', body: 'Watches the living world turn. Touches nothing — yet.' },
@@ -99,6 +158,7 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
             <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: 0.3 }}>
               {p.epithet}
             </div>
+            <Epigraph color={p.color}>{p.epigraph}</Epigraph>
             <p style={{ color: 'var(--text)', fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{p.body}</p>
           </div>
         ))}
@@ -119,7 +179,20 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
             }}>
               {a.name}
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text)', marginTop: 2 }}>{a.domain}.</div>
+            {ARCH_LORE[a.id] && (
+              <div style={{ fontSize: 11.5, color: 'var(--text-dim)', marginTop: 1, letterSpacing: 0.3 }}>
+                {ARCH_LORE[a.id].epithet}
+              </div>
+            )}
+            <div style={{ fontSize: 12.5, color: 'var(--text)', marginTop: 4 }}>{a.domain}.</div>
+            {ARCH_LORE[a.id] && (
+              <>
+                <Epigraph color={a.color}>{ARCH_LORE[a.id].epigraph}</Epigraph>
+                <p style={{ color: 'var(--text)', fontSize: 13, lineHeight: 1.6, margin: '0 0 6px' }}>
+                  {ARCH_LORE[a.id].body}
+                </p>
+              </>
+            )}
             <div style={{ fontSize: 11.5, marginTop: 4 }}>
               <span style={{ color: 'var(--teal)' }}>＋ {a.boon}</span><br />
               <span style={{ color: 'var(--crimson)' }}>－ {a.drawback}</span>
@@ -167,6 +240,18 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
         </button>
       </div>
     </div>
+  )
+}
+
+function Epigraph({ children, color }: { children: React.ReactNode; color: string }) {
+  return (
+    <p style={{
+      borderLeft: `2px solid ${color}`, paddingLeft: 10, margin: '7px 0 8px',
+      fontStyle: 'italic', fontSize: 13, lineHeight: 1.5,
+      color: 'var(--bone)', opacity: 0.82,
+    }}>
+      “{children}”
+    </p>
   )
 }
 
