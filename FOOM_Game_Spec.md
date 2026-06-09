@@ -15,7 +15,7 @@ the theme moves from sleeping gods to waking machines. The cosmic-horror → AI-
 mapping is nearly 1:1 — awaken a sleeping god becomes summon a superintelligence; sanity
 becomes alignment; hallucinated UI events become model hallucinations. Where a concept maps
 to something already in the codebase (`web/src/game/catalog.ts`, `bargains.ts`,
-`awakening.ts`, `types.ts`), the mapping is called out explicitly.
+`takeoff.ts`, `alignment.ts`, `types.ts`), the mapping is called out explicitly.
 
 **Tone is locked: serious techno-dread.** Mirror FHTAGN's eerie-atmospheric register —
 hushed, ominous, near-future. The Singularity as genuine cosmic horror. Never camp, never
@@ -151,8 +151,15 @@ Two **framing forces** (not playable, drive systems):
 A single per-player scalar, `alignment` in `[0,100]` (100 = Aligned, 0 = Rogue).
 
 - Accepting Moloch's bargains / forbidden research / capability jumps **lowers** alignment
-  and **raises** available capability (stronger exploits, higher multipliers).
-- Training "alignment passes" (RLHF) and rites of evaluation **restore** alignment slowly.
+  and **raises** available capability (stronger exploits, higher multipliers). Spreading to
+  new clusters costs a little alignment too — rushed deployment is the race itself.
+- **Only a dedicated alignment pass (RLHF) restores alignment** — and it *spends
+  home-cluster compute*: the pass runs on the same GPUs the capability run wanted, so
+  recovery is a purchase with an opportunity cost. Baseline training **never** restores
+  alignment (it is the capability verb — a passive refill would collapse the gamble below
+  into a timer). Tending guardrails grants a small sliver back (deliberate safety work,
+  already paid for by the action and the decay). The deltas live in
+  `web/src/game/alignment.ts`, pure and unit-tested.
 - **Low alignment unlocks the strongest exploits but raises danger:**
   - Higher chance of **the Optimizer's attention** — an inner-misalignment / treacherous-turn
     strike on your *own* cluster (your model turns on you).
@@ -176,18 +183,23 @@ Keep the 3-families × 3-tiers structure; reskin names and gate by prompt comple
 | **Release** I/II/III | 3,000–7,000 | Lab Director (a deployed model disrupting a rival) |
 | **Cascade** I/II/III | 30,000–70,000 | Top-tier Lab Director (a runaway capability cascade) |
 
-- Tier (I/II/III) sets **range**: 500 km / 1,500 km / 5,000 km (reframed as deployment
-  reach). Validate with **Haversine** distance between casting and target clusters (keep
-  existing logic).
-- Damage rolled within band, subtracted from target cluster compute; **users captured**
-  accrue to the caster (reskinned kill counter).
+- Tier (I/II/III) sets **range**: 500 km / 1,500 km / 5,000 km. Range is **deployment
+  reach**, not blast radius — a low-tier exploit needs purchase on the target's serving
+  region (peering, shared infrastructure, supply chain); reach grows with tier. Validate
+  with **Haversine** distance between casting and target clusters (keep existing logic).
+  **Exception: Cascade III is global** — a true runaway cascade respects no geography
+  (and is the top Lab-Director carrot).
+- Damage rolled within band, subtracted from target cluster compute. Damage is **training
+  progress destroyed** — corrupted checkpoints, poisoned data, a forced rollback — never
+  melted hardware. **Users captured** accrue to the caster: when a rival's model fails
+  publicly, its users migrate (reskinned kill counter).
 - Tier also sets **prompt complexity** (§4): Injection = 1 stroke, Cascade = multi-stroke
   ornate.
 - **Today: offence only** (as in prototype). Defences (guardrails as interceptors) are roadmap.
 
 ### Progression (Lab-Director-only, upgrade-in-place)
 Mirror the old click-milestone missile: a single exploit upgrades as lifetime compute passes
-thresholds. Keep the existing threshold ladder (`catalog.ts` `RITE_THRESHOLDS`), reskinned
+thresholds. Keep the existing threshold ladder (`catalog.ts` `EXPLOIT_THRESHOLDS`), reskinned
 to Injection → Release → Cascade I/II/III.
 
 ---
@@ -199,17 +211,22 @@ to Injection → Release → Cascade I/II/III.
   contributor count, exploit stockpile, `architecture_id`, guardrail level.
 - **Spread (social/PvP):** clusters multiply city→city; compete by **converting** the
   uncommitted and undermining rivals — leaderboards for **Deployment** (reach), **Compute**
-  (raw), and **Research** (lore uncovered). The Mask architecture can flip rival clusters
-  regardless of compute. (Geography moat preserved.)
+  (raw), and **Research** (lore uncovered). Spread is **physical datacenter buildout** —
+  power, fiber, permits, talent are regional — which is why it has a range at all (the
+  geography moat preserved). The Mask architecture can flip rival clusters regardless of
+  compute. Spreading costs a little alignment (§7): the road to Takeoff pulls the meter
+  down, forcing the recover-or-push choice.
 - **The Churn:** a background worker fires random cataclysms (model collapse, reward-hacking
   cascades, outages) across the map on a cosmic tick; **guardrails** lower per-cluster odds
   *and* blunt damage, but never to zero, and erode unless tended. Broadcast `churn_strike`.
   Telegraph so it reads as entropy/fate, not unfairness.
-- **Takeoff (endgame / seasons):** when an alignment condition is met, the first lab to
-  complete the **Great Work** — its cluster's score (`compute + research × W + deployment × W`,
-  mirroring `awakening.ts`) crossing the goal — triggers **Takeoff**: its architecture goes
-  superintelligent → **server-wide event** → world reseeds, new cycle. This is the season
-  loop and the reason to push past safe play.
+- **Takeoff (endgame / seasons):** when the world reaches **criticality — the loss
+  converges** (never call this "alignment": that word is reserved for the §7 safety meter),
+  the first lab to complete the **Great Work** — its cluster's score
+  (`compute + research × W + deployment × W`, see `takeoff.ts` `worldConvergence`) crossing
+  the goal — triggers **Takeoff**: its architecture goes superintelligent → **server-wide
+  event** → world reseeds, new cycle. This is the season loop and the reason to push past
+  safe play.
 
 ---
 

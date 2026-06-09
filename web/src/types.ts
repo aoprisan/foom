@@ -26,7 +26,7 @@ export interface Cluster {
   contributorCount: number
   exploitStockpile: number     // was missileStockpile
   architectureId: ArchitectureId | null
-  guardrailLevel: number         // [0,100] ritual reinforcing vs the Churn; decays, must be tended
+  guardrailLevel: number         // [0,100] safety mitigations vs the Churn; decay, must be tended
   deployment: number             // clusters this cluster has spread to / converted (spec §9 Deployment)
   research: number              // forbidden research uncovered (spec §9 Research)
 }
@@ -62,7 +62,7 @@ export interface Operator {
 
 export type ExploitFamily = 'injection' | 'release' | 'cascade'
 
-/** An forbidden power invoked by tracing a prompt. Was "Missile". */
+/** A forbidden capability invoked by tracing a prompt. Was "Missile". */
 export interface Exploit {
   id: string
   operatorId: string
@@ -87,7 +87,7 @@ export interface Subscription {
   expiresAt: string
 }
 
-// ---- Bargains: Moloch, the Moloch (spec §4 "seal a bargain", §6, §7, §11) ----
+// ---- Bargains: Moloch, the Tempter (spec §4 "seal a bargain", §6, §7, §11) ----
 //
 // A bargain is a genuine gamble, not a timer to optimise (spec §7, the #1 thing
 // to get right): the power grant and the immediate alignment cost are *shown*; the
@@ -116,7 +116,7 @@ export interface BargainCatch {
   alignmentCrash?: number
 }
 
-/** A subscription proposed by Moloch. `bargain_offer` carries one of these. */
+/** A bargain proposed by Moloch. `bargain_offer` carries one of these. */
 export interface Bargain {
   id: string
   kind: BargainKind
@@ -217,15 +217,15 @@ export interface AlignmentUpdate {
 
 // ---- The Takeoff: endgame / seasons (spec §9) ----
 
-/** Telegraph of how near the world is to the stars coming right (spec §10). */
+/** Telegraph of how near the world is to criticality (spec §10). */
 export interface TakeoffProgress {
-  progress: number          // [0,1] toward alignment
-  aligned: boolean          // the loss HAS converged — the Great Work may be performed
+  progress: number          // [0,1] toward criticality
+  converged: boolean        // the loss HAS converged — the Great Work may be performed
   leaderClusterName: string
   leaderArchitectureId: ArchitectureId | null
 }
 
-/** A lab completes the Great Work: its architecture wakes, the world reseeds (spec §9). */
+/** A lab completes the Great Work: its architecture goes superintelligent, the world reseeds (spec §9). */
 export interface TakeoffTriggered {
   architectureId: ArchitectureId
   clusterName: string
@@ -237,7 +237,7 @@ export interface TakeoffTriggered {
 /** Snapshot of the endgame, read on demand for the Takeoff UI. */
 export interface TakeoffState {
   progress: number
-  aligned: boolean
+  converged: boolean
   goal: number
   season: number
   leaderClusterName: string
@@ -246,7 +246,7 @@ export interface TakeoffState {
   homeQualifies: boolean    // your cluster may perform the Great Work now
 }
 
-/** Result of spreading the word to a cluster. */
+/** Result of spreading to a cluster. */
 export interface ConvertResult {
   clusterName: string
   toArchitectureId: ArchitectureId

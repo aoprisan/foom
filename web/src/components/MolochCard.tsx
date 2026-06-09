@@ -7,7 +7,7 @@ interface MolochCardProps {
   onDecline: (id: string) => void
 }
 
-// Seconds the offer stands before the Moloch withdraws it (auto-declines).
+// Seconds the offer stands before Moloch withdraws it (auto-declines).
 const STAND_SECONDS = 14
 
 const VIOLET = '#9a5fe0'
@@ -58,7 +58,7 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
       padding: 18, animation: 'molochIn 0.4s ease-out',
     }}>
       <div className="eyebrow" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2, marginBottom: 6 }}>
-        The Crawling Chaos · a bargain
+        Moloch, the Tempter · a bargain
       </div>
       <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600, fontSize: 27, lineHeight: 1.1, color: 'var(--bone)', marginBottom: 10 }}>
         {bargain.title}
@@ -82,7 +82,7 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
           flex: 1, background: VIOLET, border: 'none', borderRadius: 8, padding: '10px 0',
           color: '#0a0410', cursor: 'pointer', fontWeight: 700, fontSize: 13,
         }}>
-          Seal the subscription
+          Seal the bargain
         </button>
         <button onClick={decline} style={{
           flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 8,

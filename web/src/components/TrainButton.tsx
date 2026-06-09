@@ -16,8 +16,8 @@ interface FloatNum {
 }
 
 interface TrainButtonProps {
-  onChant: () => void
-  personalChants: number
+  onTrain: () => void
+  personalSteps: number
   clusterName?: string
   rateLimited?: boolean
   tier: Tier
@@ -64,7 +64,7 @@ function playThunk(combo: number) {
   }
 }
 
-export default function TrainButton({ onChant, personalChants, clusterName, rateLimited, tier, multiplier }: TrainButtonProps) {
+export default function TrainButton({ onTrain, personalSteps, clusterName, rateLimited, tier, multiplier }: TrainButtonProps) {
   const [pressing, setPressing] = useState(false)
   const [ripples, setRipples] = useState<number[]>([])
   const [particles, setParticles] = useState<Particle[]>([])
@@ -73,9 +73,9 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
   const lastClick = useRef(0)
   const comboDecay = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const handleChant = useCallback(() => {
+  const handleTrain = useCallback(() => {
     if (tier === 'observer') {
-      onChant() // triggers the joining flow
+      onTrain() // triggers the joining flow
       return
     }
 
@@ -119,8 +119,8 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
     setParticles(prev => [...prev, ...newParticles])
     setTimeout(() => setParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id))), 600)
 
-    onChant()
-  }, [onChant, tier, multiplier, combo])
+    onTrain()
+  }, [onTrain, tier, multiplier, combo])
 
   const buttonLabel = tier === 'observer' ? 'JOIN' : `TRAIN +${multiplier}`
   const heat = combo / COMBO_MAX
@@ -175,7 +175,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
         ))}
 
         <button
-          onClick={handleChant}
+          onClick={handleTrain}
           className="train-orb"
           style={{
             width: 120, height: 120, borderRadius: '50%',
@@ -183,7 +183,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
               ? 'radial-gradient(circle at 36% 32%, #ffce9e, #ff8a3c 45%, #5a2410 100%)'
               : 'radial-gradient(circle at 36% 32%, #ffd0a0, #ff8a3c 42%, #5a2410 100%)',
             border: '1px solid rgba(255, 176, 110, 0.55)', cursor: 'pointer',
-            // chantPulse animates box-shadow, so heat rides on filter instead
+            // trainPulse animates box-shadow, so heat rides on filter instead
             // (brighter + a hotter ember halo as the streak builds).
             boxShadow: '0 0 44px rgba(255, 138, 60, 0.55), 0 0 12px rgba(255,206,158,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25)',
             filter: `brightness(${1 + heat * 0.28}) drop-shadow(0 0 ${heat * 26}px rgba(255,138,60,${heat * 0.9}))`,
@@ -197,7 +197,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
             fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 600, fontStyle: 'italic',
             letterSpacing: 0.5, color: '#2a0f02',
             textShadow: '0 1px 1px rgba(255,255,255,0.35)',
-            animation: 'chantPulse 3.4s ease-in-out infinite',
+            animation: 'trainPulse 3.4s ease-in-out infinite',
           }}
         >
           {buttonLabel}
@@ -206,7 +206,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
 
       {tier !== 'observer' && (
         <span className="mono" style={{ fontSize: 16, color: 'var(--gold-bright)', textShadow: '0 0 14px rgba(240,197,74,0.45)' }}>
-          {personalChants.toLocaleString()}
+          {personalSteps.toLocaleString()}
         </span>
       )}
 
@@ -225,7 +225,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
           fontSize: 11, color: 'var(--crimson)', fontFamily: 'var(--font-sans)',
           animation: 'fadeInOut 2s ease-out forwards',
         }}>
-          The words tangle — slow down.
+          The pipeline saturates — slow down.
         </span>
       )}
 
@@ -248,7 +248,7 @@ export default function TrainButton({ onChant, personalChants, clusterName, rate
           70% { opacity: 1; }
           100% { opacity: 0; }
         }
-        @keyframes chantPulse {
+        @keyframes trainPulse {
           0%, 100% { box-shadow: 0 0 44px rgba(255,138,60,0.55), 0 0 12px rgba(255,206,158,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
           50% { box-shadow: 0 0 64px rgba(255,138,60,0.78), 0 0 20px rgba(255,206,158,0.9), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
         }

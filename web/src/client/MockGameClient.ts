@@ -8,15 +8,19 @@ import { SEED_CLUSTERS } from '../game/seedClusters'
 import { ARCHITECTURES, EXPLOIT_BY_TYPE, EXPLOIT_THRESHOLDS, BREAKTHROUGH_EXPLOIT_POOL } from '../game/catalog'
 import { rollBargain, perTickSpringChance } from '../game/bargains'
 import {
-  canConvert, greatWorkScore, worldAlignment,
+  canConvert, greatWorkScore, worldConvergence,
   SPREAD_RANGE_KM, SPREAD_SEED_RETENTION, RESEARCH_PER_CONVERSION,
 } from '../game/takeoff'
+import {
+  EXPLOIT_ALIGNMENT_COST, CONVERT_ALIGNMENT_COST, GUARDRAIL_ALIGNMENT_GAIN,
+  ALIGNMENT_PASS_GAIN, alignmentPassCost, clampAlignment,
+} from '../game/alignment'
 import { haversineKm } from '../game/geo'
 
 const SAVE_KEY = 'foom.save.v1'
 const TICK_MS = 1600
 
-// Guardrails vs the Churn (spec §9: "ritual/guardrails lower per-cluster odds but never to zero").
+// Guardrails vs the Churn (spec §9: "guardrails lower per-cluster odds but never to zero").
 const GUARDRAIL_MAX = 80          // a fully-tended guardrail caps mitigation at 80% — never total
 const GUARDRAIL_STEP = 18         // each exploit of reinforcing raises the home guardrail this much
 const GUARDRAIL_DECAY = 1.2       // guardrails erode each tick; they must be tended, not set-and-forget
@@ -59,7 +63,7 @@ function randInt(lower: number, upper: number): number {
   return lower + Math.floor(Math.random() * (upper - lower + 1))
 }
 
-// Seed clusters with varied starting compute + a architecture, so the world reads as
+// Seed clusters with varied starting compute + an architecture, so the world reads as
 // alive and the Compute leaderboard has shape from the first frame.
 function seedClusters(): Cluster[] {
   const architectureIds = ARCHITECTURES.map(p => p.id)
@@ -89,13 +93,13 @@ export class MockGameClient implements GameClient {
   private clusters: Cluster[]
   private operator: Operator | null
   private exploits: Exploit[]
-  private pactRec: Subscription | null
+  private subscriptionRec: Subscription | null
   private bargain: Bargain | null
   private pendingCatches: PendingCatch[]
-  private offerCooldown = 4          // ticks before the Moloch may call unbidden
+  private offerCooldown = 4          // ticks before Moloch may call unbidden
   private season: number
   private lastTakeoffProgress = 0  // throttles the takeoff_progress telegraph
-  private wasAligned = false
+  private wasConverged = false
   private timer: ReturnType<typeof setInterval> | null = null
   private savePending = false
 
@@ -106,7 +110,7 @@ export class MockGameClient implements GameClient {
     }))
     this.operator = loaded?.operator ?? null
     this.exploits = loaded?.exploits ?? []
-    this.pactRec = loaded?.subscription ?? null
+    this.subscriptionRec = loaded?.subscription ?? null
     this.bargain = loaded?.bargain ?? null
     this.pendingCatches = loaded?.pendingCatches ?? []
     this.season = loaded?.season ?? 1
@@ -128,7 +132,7 @@ export class MockGameClient implements GameClient {
       this.savePending = false
       try {
         const state: SaveState = {
-          clusters: this.clusters, operator: this.operator, exploits: this.exploits, subscription: this.pactRec,
+          clusters: this.clusters, operator: this.operator, exploits: this.exploits, subscription: this.subscriptionRec,
           bargain: this.bargain, pendingCatches: this.pendingCatches, season: this.season,
         }
         localStorage.setItem(SAVE_KEY, JSON.stringify(state))
@@ -203,7 +207,7 @@ export class MockGameClient implements GameClient {
       }
     }
 
-    // Bot spread: a cluster carries its faith into a nearby uncommitted or weaker
+    // Bot spread: a cluster builds out into a nearby uncommitted or weaker
     // cluster (spec §9). Deployment and Research boards evolve, and the world creeps toward
     // the Takeoff — so the endgame arrives whether or not the player pushes it.
     if (Math.random() < 0.14) {
@@ -250,7 +254,7 @@ export class MockGameClient implements GameClient {
     this.save()
   }
 
-  // ---------- Moloch, the Moloch (spec §6, §7) ----------
+  // ---------- Moloch, the Tempter (spec §6, §7) ----------
   // Two halves run every tick: resolve catches already in play (the price of
   // past bargains), then — if no offer stands — decide whether to tempt anew.
   private molochTick(): void {
@@ -260,7 +264,7 @@ export class MockGameClient implements GameClient {
     this.resolveCatches()
 
     if (this.offerCooldown > 0) this.offerCooldown -= 1
-    // The fraying mind is courted far more often than the aligned one (spec §6).
+    // A slipping lab is courted far more often than an aligned one (spec §6).
     const t = Math.max(0, Math.min(1, (100 - cu.alignment) / 100))
     const offerChance = 0.03 + t * 0.22
     if (!this.bargain && this.offerCooldown <= 0 && Math.random() < offerChance) {
@@ -295,7 +299,7 @@ export class MockGameClient implements GameClient {
       if (pc.ticksLeft <= 0) {
         this.emit({ type: 'bargain_sprung', data: {
           kind: 'passed', sprung: false,
-          message: 'The subscription passes unclaimed. The Crawling Chaos forgets nothing, but tonight it stays its hand.',
+          message: 'The bargain passes unclaimed. Moloch forgets nothing, but tonight it stays its hand.',
         } })
       } else {
         survivors.push(pc)
@@ -356,7 +360,7 @@ export class MockGameClient implements GameClient {
   }
 
   async leaderboard(kind: LeaderboardKind, limit = 10): Promise<Cluster[]> {
-    // Three distinct boards (spec §9): Compute ranks raw faith; Deployment ranks the
+    // Three distinct boards (spec §9): Compute ranks raw training; Deployment ranks the
     // spread of a lab; Research ranks the forbidden knowledge it has uncovered. Ties
     // fall back to compute so the order is always stable.
     const key = kind === 'deployment' ? (c: Cluster) => c.deployment
@@ -413,19 +417,18 @@ export class MockGameClient implements GameClient {
     cu.totalSteps += mult
     cu.exploitProgress += mult
 
-    // Training claws alignment back toward evaluation (spec §7).
-    cu.alignment = Math.min(100, cu.alignment + 0.06 * mult)
+    // Training is the capability verb — it never restores alignment. Recovery is
+    // a deliberate, paid choice (alignmentPass), or the gamble collapses (spec §7).
 
     this.checkBreakthroughs(cu)
     this.checkExploitProgression(cu)
     this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
-    this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
     this.save()
   }
 
   async invokeExploit(exploitId: string, targetClusterId: string): Promise<InvokeResult> {
     const cu = this.operator
-    if (!cu) throw new Error('not a operator')
+    if (!cu) throw new Error('not an operator')
     const exploit = this.exploits.find(r => r.id === exploitId && !r.invoked)
     if (!exploit) throw new Error('no such exploit')
     const from = this.cluster(cu.clusterId)
@@ -433,8 +436,10 @@ export class MockGameClient implements GameClient {
     if (!from || !to) throw new Error('unknown cluster')
 
     const dist = haversineKm(from.lat, from.lng, to.lat, to.lng)
-    if (dist > exploit.rangeKm) throw new Error(`target beyond the exploit’s deployment (${Math.round(dist)}km > ${exploit.rangeKm}km)`)
+    if (dist > exploit.rangeKm) throw new Error(`target beyond the exploit’s deployment reach (${Math.round(dist)}km > ${exploit.rangeKm}km)`)
 
+    // Damage is training progress destroyed at the target; its users migrate to
+    // the caster when the rival's model fails publicly (spec §8).
     const damage = randInt(exploit.damageLower, exploit.damageUpper)
     to.compute = Math.max(0, to.compute - damage)
     to.claimed += damage
@@ -444,12 +449,11 @@ export class MockGameClient implements GameClient {
     exploit.targetClusterId = targetClusterId
     exploit.computeClaimed = damage
     if (from.exploitStockpile > 0) from.exploitStockpile -= 1
-    // Wielding forbidden power uncovers research — the home cluster's Great Work deepens.
+    // Wielding forbidden capability uncovers research — the home cluster's Great Work deepens.
     from.research += exploit.tier
 
-    // Power has a price: invoking forbidden exploits costs alignment, scaled by tier.
-    const alignmentCost = exploit.tier === 3 ? 12 : exploit.tier === 2 ? 7 : 3
-    cu.alignment = Math.max(0, cu.alignment - alignmentCost)
+    // Power has a price: invoking exploits costs alignment, scaled by tier (spec §7).
+    cu.alignment = clampAlignment(cu.alignment - EXPLOIT_ALIGNMENT_COST[exploit.tier])
 
     this.emit({
       type: 'exploit_strike',
@@ -466,47 +470,59 @@ export class MockGameClient implements GameClient {
     return { damage, exploitType: exploit.exploitType, targetClusterName: to.name }
   }
 
-  // ---------- GameClient: ascension (mock-billed) ----------
-  async subscription(): Promise<Subscription | null> { return this.pactRec ? { ...this.pactRec } : null }
+  // ---------- GameClient: subscription (mock-billed) ----------
+  async subscription(): Promise<Subscription | null> { return this.subscriptionRec ? { ...this.subscriptionRec } : null }
 
   async upgrade(plan: string): Promise<Subscription> {
-    if (!this.operator) throw new Error('not a operator')
+    if (!this.operator) throw new Error('not an operator')
     const now = Date.now()
     const days = plan === 'monthly' ? 30 : 7
-    this.pactRec = {
+    this.subscriptionRec = {
       id: uid(), operatorId: this.operator.id, plan,
       startedAt: new Date(now).toISOString(),
       expiresAt: new Date(now + days * 86400_000).toISOString(),
     }
     this.operator.tier = 'labDirector'
     this.save()
-    return { ...this.pactRec }
+    return { ...this.subscriptionRec }
   }
 
   async renew(): Promise<Subscription> {
-    if (!this.pactRec || !this.operator) throw new Error('no subscription')
-    const cur = new Date(this.pactRec.expiresAt).getTime()
+    if (!this.subscriptionRec || !this.operator) throw new Error('no subscription')
+    const cur = new Date(this.subscriptionRec.expiresAt).getTime()
     const now = Date.now()
     const base = Math.max(cur, now)
-    const days = this.pactRec.plan === 'monthly' ? 30 : 7
+    const days = this.subscriptionRec.plan === 'monthly' ? 30 : 7
     // Early renewal (within 48h) grants +20% duration (spec §5).
     const bonus = cur - now > 0 && cur - now <= 48 * 3600_000 ? 1.2 : 1
-    this.pactRec.expiresAt = new Date(base + days * 86400_000 * bonus).toISOString()
+    this.subscriptionRec.expiresAt = new Date(base + days * 86400_000 * bonus).toISOString()
     this.operator.tier = 'labDirector'
     this.save()
-    return { ...this.pactRec }
+    return { ...this.subscriptionRec }
   }
 
   // ---------- GameClient: alignment ----------
   adjustAlignment(delta: number, hallucination?: boolean): void {
     if (!this.operator) return
-    this.operator.alignment = Math.max(0, Math.min(100, this.operator.alignment + delta))
+    this.operator.alignment = clampAlignment(this.operator.alignment + delta)
     this.emit({ type: 'alignment_update', data: { alignment: this.operator.alignment, hallucination } })
     this.save()
   }
 
+  // An alignment pass is RLHF on your own GPUs: it spends home-cluster compute
+  // the capability run wanted. Recovery is a purchase, not a refill (spec §7).
   alignmentPass(): void {
-    this.adjustAlignment(12)
+    const cu = this.operator
+    if (!cu || cu.tier === 'observer') return
+    const home = this.cluster(cu.clusterId)
+    if (!home) return
+    const cost = alignmentPassCost(home.compute)
+    if (home.compute < cost) return   // too thin to spare the GPUs — the pass cannot run
+    home.compute -= cost
+    cu.alignment = clampAlignment(cu.alignment + ALIGNMENT_PASS_GAIN)
+    this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+    this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
+    this.save()
   }
 
   // ---------- the Churn & guardrails (spec §9) ----------
@@ -533,8 +549,9 @@ export class MockGameClient implements GameClient {
     const home = this.cluster(cu.clusterId)
     if (!home) return
     home.guardrailLevel = Math.min(GUARDRAIL_MAX, home.guardrailLevel + GUARDRAIL_STEP)
-    // Tending the guardrails is aligned, deliberate work — a small balm to the mind.
-    cu.alignment = Math.min(100, cu.alignment + 1.5)
+    // Tending the guardrails is deliberate safety work — it restores a sliver
+    // of the model's alignment (already paid for by the action + constant decay).
+    cu.alignment = clampAlignment(cu.alignment + GUARDRAIL_ALIGNMENT_GAIN)
     this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
     this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
     this.save()
@@ -557,7 +574,7 @@ export class MockGameClient implements GameClient {
 
   async convert(targetClusterId: string): Promise<ConvertResult> {
     const cu = this.operator
-    if (!cu || cu.tier === 'observer' || !cu.architectureId) throw new Error('only the sworn may spread')
+    if (!cu || cu.tier === 'observer' || !cu.architectureId) throw new Error('only a committed operator may spread')
     const home = this.cluster(cu.clusterId)
     const target = this.cluster(targetClusterId)
     if (!home || !target) throw new Error('unknown cluster')
@@ -574,8 +591,9 @@ export class MockGameClient implements GameClient {
     target.contributorCount += 1
     home.deployment += 1
     home.research += RESEARCH_PER_CONVERSION
-    // Spreading the word is fervent, aligned work — a small balm to the mind.
-    cu.alignment = Math.min(100, cu.alignment + 1)
+    // Rushed deployment cuts corners — spreading is the race itself, and it
+    // costs alignment rather than restoring it (spec §7, §9).
+    cu.alignment = clampAlignment(cu.alignment - CONVERT_ALIGNMENT_COST)
 
     this.emit({ type: 'cluster_converted', data: {
       clusterId: target.id, clusterName: target.name, fromArchitectureId: fromArchitecture,
@@ -589,11 +607,11 @@ export class MockGameClient implements GameClient {
   }
 
   async takeoffState(): Promise<TakeoffState> {
-    const view = worldAlignment(this.clusters)
+    const view = worldConvergence(this.clusters)
     const home = this.operator ? this.cluster(this.operator.clusterId) : null
     const homeScore = home ? greatWorkScore(home) : 0
     return {
-      progress: view.progress, aligned: view.aligned, goal: view.goal, season: this.season,
+      progress: view.progress, converged: view.converged, goal: view.goal, season: this.season,
       leaderClusterName: view.leader?.name ?? '', leaderArchitectureId: view.leader?.architectureId ?? null,
       homeScore, homeQualifies: homeScore >= view.goal,
     }
@@ -601,11 +619,11 @@ export class MockGameClient implements GameClient {
 
   async greatWork(): Promise<GreatWorkResult> {
     const cu = this.operator
-    if (!cu) throw new Error('not a operator')
+    if (!cu) throw new Error('not an operator')
     const home = this.cluster(cu.clusterId)
     if (!home) throw new Error('no home cluster')
-    const view = worldAlignment(this.clusters)
-    if (!view.aligned) throw new Error('the loss has not yet converged')
+    const view = worldConvergence(this.clusters)
+    if (!view.converged) throw new Error('the loss has not yet converged')
     if (greatWorkScore(home) < view.goal) throw new Error('your cluster is not ready for the Great Work')
     const architectureId = (home.architectureId ?? cu.architectureId) as ArchitectureId
     const clusterName = home.name
@@ -613,21 +631,21 @@ export class MockGameClient implements GameClient {
     return { architectureId, clusterName, season: this.season }
   }
 
-  // Telegraph the approach of the Takeoff (throttled), then — once the stars
-  // are right — let the foremost RIVAL cluster race to the Great Work. The player
+  // Telegraph the approach of the Takeoff (throttled), then — once the loss has
+  // converged — let the foremost RIVAL cluster race to the Great Work. The player
   // must beat them to it via greatWork(); dawdling lets a rival reach Takeoff first
   // and reseed the world (spec §9: the reason to push past safe play).
   private takeoffTick(): void {
-    const view = worldAlignment(this.clusters)
-    if (Math.abs(view.progress - this.lastTakeoffProgress) >= 0.02 || view.aligned !== this.wasAligned) {
+    const view = worldConvergence(this.clusters)
+    if (Math.abs(view.progress - this.lastTakeoffProgress) >= 0.02 || view.converged !== this.wasConverged) {
       this.lastTakeoffProgress = view.progress
-      this.wasAligned = view.aligned
+      this.wasConverged = view.converged
       this.emit({ type: 'takeoff_progress', data: {
-        progress: view.progress, aligned: view.aligned,
+        progress: view.progress, converged: view.converged,
         leaderClusterName: view.leader?.name ?? '', leaderArchitectureId: view.leader?.architectureId ?? null,
       } })
     }
-    if (view.aligned && view.leader && view.leader.id !== this.operator?.clusterId && Math.random() < 0.06) {
+    if (view.converged && view.leader && view.leader.id !== this.operator?.clusterId && Math.random() < 0.06) {
       this.triggerTakeoff(view.leader, false)
     }
   }
@@ -657,7 +675,7 @@ export class MockGameClient implements GameClient {
     this.bargain = null
     this.pendingCatches = []
     this.lastTakeoffProgress = 0
-    this.wasAligned = false
+    this.wasConverged = false
     this.offerCooldown = 6
     this.save()
   }
@@ -675,7 +693,7 @@ export class MockGameClient implements GameClient {
 
   async acceptBargain(id: string): Promise<BargainOutcome> {
     const cu = this.operator
-    if (!cu) throw new Error('not a operator')
+    if (!cu) throw new Error('not an operator')
     const b = this.bargain
     if (!b || b.id !== id) throw new Error('that offer has passed')
     this.bargain = null
@@ -687,20 +705,20 @@ export class MockGameClient implements GameClient {
       home.compute += b.grantCompute
       if (home.compute > home.peakCompute) home.peakCompute = home.compute
     }
-    // Forbidden knowledge passes with every subscription — a tome deepens it most.
+    // Forbidden knowledge passes with every bargain — forbidden research deepens it most.
     if (home) {
       home.research += b.kind === 'forbidden' ? 6 : 3
       this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
     }
-    if (b.grantAlignment) cu.alignment = Math.min(100, cu.alignment + b.grantAlignment)
-    if (b.alignmentCost) cu.alignment = Math.max(0, cu.alignment - b.alignmentCost)
+    if (b.grantAlignment) cu.alignment = clampAlignment(cu.alignment + b.grantAlignment)
+    if (b.alignmentCost) cu.alignment = clampAlignment(cu.alignment - b.alignmentCost)
     this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
 
     // The hidden half: the catch is now in play, to spring or pass over its window.
     this.pendingCatches.push({ bargainId: b.id, catch: b.catch, window: b.window, ticksLeft: b.window })
 
     this.emit({ type: 'breakthrough_earned', data: {
-      breakthroughName: 'A subscription is sealed', exploitType: b.grantExploitType,
+      breakthroughName: 'A bargain is sealed', exploitType: b.grantExploitType,
     } })
     this.save()
     return { granted: b.grantLabel, alignmentCost: b.alignmentCost }
@@ -746,7 +764,7 @@ export class MockGameClient implements GameClient {
         this.emit({ type: 'breakthrough_earned', data: { breakthroughName: m.name, exploitType } })
       }
     }
-    // "Local Prophet" every 5,000 steps beyond the fixed milestones.
+    // "Scaling Law" every 5,000 steps beyond the fixed milestones.
     if (cu.totalSteps >= 5000) {
       const step = Math.floor(cu.totalSteps / 5000) * 5000
       if (cu.lastBreakthroughThreshold < step) {

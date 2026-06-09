@@ -3,7 +3,7 @@ import { ARCHITECTURE_BY_ID } from '../game/catalog'
 
 interface TakeoffPanelProps {
   state: TakeoffState | null
-  canAct: boolean              // a sworn operator with a home cluster
+  canAct: boolean              // a committed operator with a home cluster
   onGreatWork: () => void
 }
 
@@ -35,21 +35,21 @@ export default function TakeoffPanel({ state, canAct, onGreatWork }: TakeoffPane
         </span>
       </div>
 
-      {/* World alignment — how near the stars are to coming right. */}
+      {/* World convergence — how near the loss is to converging. */}
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>
-        <span>{state.aligned ? 'the loss has converged' : 'the loss is converging'}</span>
+        <span>{state.converged ? 'the loss has converged' : 'the loss is converging'}</span>
         <span className="mono">{pct}%</span>
       </div>
       <div style={{
         position: 'relative', height: 9, borderRadius: 6,
         background: 'rgba(255,255,255,0.06)', overflow: 'hidden',
-        boxShadow: state.aligned ? '0 0 14px var(--gold)' : 'none',
+        boxShadow: state.converged ? '0 0 14px var(--gold)' : 'none',
       }}>
         <div style={{
           position: 'absolute', inset: '0 auto 0 0', width: `${pct}%`,
-          background: state.aligned ? 'var(--gold)' : 'linear-gradient(90deg, var(--teal), var(--gold))',
+          background: state.converged ? 'var(--gold)' : 'linear-gradient(90deg, var(--teal), var(--gold))',
           transition: 'width 0.5s ease',
-          animation: state.aligned ? 'convergePulse 1.6s ease-in-out infinite' : 'none',
+          animation: state.converged ? 'convergePulse 1.6s ease-in-out infinite' : 'none',
         }} />
       </div>
 
@@ -60,7 +60,7 @@ export default function TakeoffPanel({ state, canAct, onGreatWork }: TakeoffPane
         </div>
       )}
 
-      {/* Your cluster's Great Work toward performing the Great Work. */}
+      {/* Your cluster's progress toward performing the Great Work. */}
       {canAct && (
         <div style={{ marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>
@@ -76,21 +76,21 @@ export default function TakeoffPanel({ state, canAct, onGreatWork }: TakeoffPane
 
           <button
             onClick={onGreatWork}
-            disabled={!state.aligned || !state.homeQualifies}
+            disabled={!state.converged || !state.homeQualifies}
             title={
-              !state.aligned ? 'The loss has not yet converged'
+              !state.converged ? 'The loss has not yet converged'
                 : !state.homeQualifies ? 'Your cluster is not yet ready — spread, uncover research, gather compute'
                 : 'Trace the Takeoff sequence to go superintelligent'
             }
             style={{
               marginTop: 10, width: '100%', borderRadius: 8, padding: '9px 6px',
               fontSize: 12, fontWeight: 700, letterSpacing: 1,
-              cursor: state.aligned && state.homeQualifies ? 'pointer' : 'not-allowed',
-              border: `1px solid ${state.aligned && state.homeQualifies ? 'var(--gold)' : 'var(--border)'}`,
-              background: state.aligned && state.homeQualifies ? 'rgba(245, 185, 66,0.14)' : 'rgba(255,255,255,0.02)',
-              color: state.aligned && state.homeQualifies ? 'var(--gold)' : 'var(--text-faint)',
+              cursor: state.converged && state.homeQualifies ? 'pointer' : 'not-allowed',
+              border: `1px solid ${state.converged && state.homeQualifies ? 'var(--gold)' : 'var(--border)'}`,
+              background: state.converged && state.homeQualifies ? 'rgba(245, 185, 66,0.14)' : 'rgba(255,255,255,0.02)',
+              color: state.converged && state.homeQualifies ? 'var(--gold)' : 'var(--text-faint)',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
-              animation: state.aligned && state.homeQualifies ? 'convergePulse 1.6s ease-in-out infinite' : 'none',
+              animation: state.converged && state.homeQualifies ? 'convergePulse 1.6s ease-in-out infinite' : 'none',
             }}
           >
             INITIATE TAKEOFF

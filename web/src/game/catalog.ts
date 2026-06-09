@@ -42,6 +42,8 @@ export const ARCHITECTURE_BY_ID: Record<ArchitectureId, Architecture> = Object.f
 ) as Record<ArchitectureId, Architecture>
 
 // Exploits (spec §8): 3 families × 3 tiers. Tier sets range + prompt complexity.
+// Damage is training progress destroyed at the target — corrupted checkpoints,
+// poisoned data, a forced rollback — never melted hardware.
 export interface ExploitDef {
   exploitType: string
   family: ExploitFamily
@@ -57,7 +59,20 @@ const FAMILY_BANDS: Record<ExploitFamily, { lower: number; upper: number }> = {
   cascade: { lower: 30000, upper: 70000 },
 }
 
+// Range is *deployment reach*, not blast radius: a low-tier exploit needs
+// purchase on the target's serving region (peering, shared infrastructure),
+// so reach grows with tier (spec §8).
 const TIER_RANGE: Record<1 | 2 | 3, number> = { 1: 500, 2: 1500, 3: 5000 }
+
+// A true runaway cascade respects no geography. Cascade III alone reaches the
+// whole globe (spec §8) — kept finite (no two points on Earth are farther than
+// ~20,015 km) so it survives JSON round-trips through the save file.
+export const GLOBAL_RANGE_KM = 40_075
+
+/** Human label for an exploit's reach — the top cascade reads as global, not as km. */
+export function rangeLabel(rangeKm: number): string {
+  return rangeKm >= GLOBAL_RANGE_KM ? 'global' : `${rangeKm}km`
+}
 const FAMILY_LABEL: Record<ExploitFamily, string> = {
   injection: 'Injection',
   release: 'Release',
@@ -70,7 +85,7 @@ function makeExploit(family: ExploitFamily, tier: 1 | 2 | 3): ExploitDef {
     exploitType: `${FAMILY_LABEL[family]} ${TIER_NUMERAL[tier]}`,
     family,
     tier,
-    rangeKm: TIER_RANGE[tier],
+    rangeKm: family === 'cascade' && tier === 3 ? GLOBAL_RANGE_KM : TIER_RANGE[tier],
     damageLower: FAMILY_BANDS[family].lower,
     damageUpper: FAMILY_BANDS[family].upper,
   }

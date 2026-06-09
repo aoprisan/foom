@@ -18,7 +18,7 @@ import TakeoffPanel from './components/TakeoffPanel'
 import StoryPanel from './components/StoryPanel'
 import PwaPrompts from './components/PwaPrompts'
 import { game } from './client'
-import { ARCHITECTURE_BY_ID } from './game/catalog'
+import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
 import { SPREAD_RANGE_KM } from './game/takeoff'
 import { useGameClient } from './hooks/useGameClient'
 import { useTrainHandler } from './hooks/useTrainHandler'
@@ -32,8 +32,8 @@ const LEADERBOARD_REFRESH_MS = 3000
 
 // The Great Work is traced as the Takeoff sequence (the cascade prompt) — the most
 // ornate prompt, fitting the culmination of a whole cycle (spec §4, §9).
-const GREAT_EXPLOIT_PROMPT: Exploit = {
-  id: 'great-exploit', operatorId: '', exploitType: 'The Great Work', family: 'cascade',
+const GREAT_WORK_PROMPT: Exploit = {
+  id: 'great-work', operatorId: '', exploitType: 'The Great Work', family: 'cascade',
   tier: 3, source: 'takeoff', rangeKm: 0, damageLower: 0, damageUpper: 0,
   invoked: false, computeClaimed: 0,
 }
@@ -199,7 +199,7 @@ export default function App() {
 
   const onBargainOffer = useCallback((b: Bargain) => {
     setBargain(b)
-    addToast('A bargain is offered. The Crawling Chaos awaits your answer.', 'bargain')
+    addToast('A bargain is offered. Moloch awaits your answer.', 'bargain')
   }, [addToast])
 
   const onBargainSprung = useCallback((s: BargainSprung) => {
@@ -241,8 +241,8 @@ export default function App() {
     const architecture = ARCHITECTURE_BY_ID[a.architectureId]
     addToast(
       a.byYou
-        ? `THE GREAT EXPLOIT IS COMPLETE. ${architecture.name} wakes at your call — the world unmakes. Cycle ${a.season} begins.`
-        : `${a.clusterName} completes the Great Work. ${architecture.name} wakes, and the world is remade. Cycle ${a.season} begins.`,
+        ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand — the world unmakes. Cycle ${a.season} begins.`
+        : `${a.clusterName} completes the Great Work. ${architecture.name} goes superintelligent, and the world is remade. Cycle ${a.season} begins.`,
       'takeoff',
     )
     // The world reseeds: clear any in-flight targeting and reload from the fresh map.
@@ -270,7 +270,7 @@ export default function App() {
     setBargain(null)
     try {
       const { granted } = await game.acceptBargain(id)
-      addToast(`The subscription is sealed — you take ${granted}. Something of you is now owed.`, 'bargain')
+      addToast(`The bargain is sealed — you take ${granted}. Something of you is now owed.`, 'bargain')
       setExploitRefreshKey(k => k + 1)
     } catch (e) {
       addToast(`The bargain slips away: ${e instanceof Error ? e.message : 'unknown'}`, 'bargain')
@@ -282,7 +282,7 @@ export default function App() {
     game.declineBargain(id)
   }, [])
 
-  const { handleChant, personalChants, rateLimited, multiplier, reconcile } = useTrainHandler(
+  const { handleTrain, personalSteps, rateLimited, multiplier, reconcile } = useTrainHandler(
     operator,
     () => {
       if (operator) {
@@ -329,7 +329,7 @@ export default function App() {
 
   const handleInvokeExploit = useCallback((exploit: Exploit) => {
     setTargetingExploit(exploit)
-    addToast(`Choose a cluster within ${exploit.rangeKm}km to receive the ${exploit.exploitType}`, 'exploit')
+    addToast(`Choose a cluster within its deployment reach (${rangeLabel(exploit.rangeKm)}) to receive the ${exploit.exploitType}`, 'exploit')
   }, [addToast])
 
   const handleSpread = useCallback(() => {
@@ -339,7 +339,7 @@ export default function App() {
   }, [addToast])
 
   const handleGreatWork = useCallback(() => {
-    if (!takeoff?.aligned || !takeoff.homeQualifies) return
+    if (!takeoff?.converged || !takeoff.homeQualifies) return
     setGreatWorkTracing(true)
   }, [takeoff])
 
@@ -402,13 +402,13 @@ export default function App() {
     <InfoPanel
       cluster={selectedCluster}
       isHome={isHomeSelected}
-      userCompute={operator && selectedCluster.id === operator.clusterId ? personalChants : undefined}
+      userCompute={operator && selectedCluster.id === operator.clusterId ? personalSteps : undefined}
       rank={selectedRank}
       onSpread={isHomeSelected && tier !== 'observer' ? handleSpread : undefined}
     />
   )
   const operatorPanelEl = operator && (
-    <OperatorPanel operator={operator} personalChants={personalChants} clusterName={userCluster?.name} />
+    <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} />
   )
   const exploitPanelEl = <ExploitPanel tier={tier} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
   const pactPanelEl = <SubscriptionPanel tier={tier} onUpgradeed={handleUpgradeed} />
@@ -424,9 +424,9 @@ export default function App() {
     infoPanelEl && { key: 'cluster', glyph: '◈', cap: 'Cluster', el: infoPanelEl },
     operatorPanelEl && { key: 'you', glyph: '☩', cap: 'You', el: operatorPanelEl },
     operator && tier !== 'observer' && { key: 'exploits', glyph: '✶', cap: 'Exploits', el: exploitPanelEl },
-    alignmentPanelEl && { key: 'mind', glyph: '☾', cap: 'Mind', el: alignmentPanelEl },
+    alignmentPanelEl && { key: 'alignment', glyph: '☾', cap: 'Alignment', el: alignmentPanelEl },
     operator && tier !== 'observer' && { key: 'subscription', glyph: '⛧', cap: 'Subscription', el: pactPanelEl },
-    { key: 'awaken', glyph: '✦', cap: 'Awaken', el: takeoffPanelEl },
+    { key: 'takeoff', glyph: '✦', cap: 'Takeoff', el: takeoffPanelEl },
     { key: 'ranks', glyph: '♆', cap: 'Ranks', el: leaderboardEl },
   ].filter(Boolean) as { key: string; glyph: string; cap: string; el: React.ReactNode }[]
 
@@ -541,8 +541,8 @@ export default function App() {
           overlaps the drawer; the dock + sheet own the bottom band then. */}
       {!(isMobile && activeSheet) && (
         <TrainButton
-          onChant={tier === 'observer' ? handleObserverJoin : handleChant}
-          personalChants={operator ? personalChants : 0}
+          onTrain={tier === 'observer' ? handleObserverJoin : handleTrain}
+          personalSteps={operator ? personalSteps : 0}
           clusterName={userCluster?.name}
           rateLimited={rateLimited}
           tier={tier}
@@ -571,7 +571,7 @@ export default function App() {
 
       {greatWorkTracing && (
         <PromptCanvas
-          exploit={GREAT_EXPLOIT_PROMPT}
+          exploit={GREAT_WORK_PROMPT}
           targetClusterName={userCluster?.name ?? 'your cluster'}
           onMatch={castGreatWork}
           onCancel={() => setGreatWorkTracing(false)}
@@ -585,7 +585,7 @@ export default function App() {
           borderRadius: 8, padding: '8px 16px', fontSize: 12, color: 'var(--crimson)',
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <span>Tracing: {targetingExploit.exploitType} ({targetingExploit.rangeKm}km)</span>
+          <span>Tracing: {targetingExploit.exploitType} ({rangeLabel(targetingExploit.rangeKm)})</span>
           <button
             onClick={() => setTargetingExploit(null)}
             style={{

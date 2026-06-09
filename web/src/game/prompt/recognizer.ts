@@ -1,7 +1,7 @@
 // Compact TypeScript port of the $P Point-Cloud Recognizer
 // (Vatavu, Anthony & Wobbrock, ICMI 2012). Dependency-light, MIT-spirit.
-// We use it client-side only: a matched sigil sends one rite_invoke event; the
-// server (later) never sees raw points (spec §4).
+// We use it client-side only: a matched prompt-glyph sends one exploit_invoke
+// event; the server (later) never sees raw points (spec §4).
 
 export interface Pt { x: number; y: number; id: number }   // id = stroke index
 
@@ -37,8 +37,8 @@ export class PointCloudRecognizer {
   }
 
   // Score the trace against ONE specific template, ignoring the others. Used so
-  // a rite succeeds when the player draws *its* sigil well enough — it doesn't
-  // also have to out-resemble every other family's sigil (spec §4: forgiving).
+  // an exploit succeeds when the player draws *its* glyph well enough — it doesn't
+  // also have to out-resemble every other family's glyph (spec §4: forgiving).
   scoreFor(name: string, points: Pt[]): number | null {
     if (points.length < 8) return null
     const t = this.templates.find(t => t.name === name)

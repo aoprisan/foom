@@ -60,7 +60,7 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button onClick={onEvaluation} style={btn('var(--teal)')}>
               Run Alignment Pass
-              <span style={hint}>+alignment</span>
+              <span style={hint}>+alignment · spends compute</span>
             </button>
             <button onClick={onCourt} style={btn('#9a5fe0')}>
               Court Moloch
@@ -69,7 +69,8 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
           </div>
 
           <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 8, lineHeight: 1.4 }}>
-            Capability costs alignment. Low alignment unlocks the strongest exploits — and lets
+            Capability costs alignment; an alignment pass buys it back with the same GPUs the
+            capability run wanted. Low alignment unlocks the strongest exploits — and lets
             phantom strikes surface that were never there.
           </div>
         </>

@@ -31,10 +31,10 @@ export interface GameClient {
   myExploits(): Promise<Exploit[]>
 
   // --- actions ---
-  train(): void                                  // emits cluster_update (+ alignment_update)
+  train(): void                                  // emits cluster_update; never moves alignment (spec §7)
   invokeExploit(exploitId: string, targetClusterId: string): Promise<InvokeResult>
 
-  // --- ascension (mock-billed) ---
+  // --- subscription (mock-billed) ---
   subscription(): Promise<Subscription | null>
   upgrade(plan: string): Promise<Subscription>            // Researcher -> Lab Director
   renew(): Promise<Subscription>
@@ -42,29 +42,29 @@ export interface GameClient {
   // --- alignment (spec §7) ---
   /** Adjust the local operator's alignment; emits alignment_update. */
   adjustAlignment(delta: number, hallucination?: boolean): void
-  /** A exploit of evaluation — claw alignment back toward Aligned. */
+  /** Run an alignment pass (RLHF): spends home-cluster compute to claw alignment back. Emits alignment_update + cluster_update when it runs. */
   alignmentPass(): void
 
   // --- the Churn & guardrails (spec §9) ---
-  /** A exploit of reinforcing — raise the home cluster's guardrail against the Churn. Emits cluster_update. */
+  /** Reinforce the home cluster's guardrails against the Churn. Emits cluster_update. */
   guardrail(): void
 
   // --- spread, conversion & the Takeoff (spec §9, build phase 6) ---
-  /** Carry the word to a cluster: convert the uncommitted or flip a rival. Emits cluster_converted. */
+  /** Spread to a cluster: convert the uncommitted or flip a rival. Emits cluster_converted. */
   convert(targetClusterId: string): Promise<ConvertResult>
-  /** The endgame snapshot — alignment, season, and your cluster's readiness. */
+  /** The endgame snapshot — convergence, season, and your cluster's readiness. */
   takeoffState(): Promise<TakeoffState>
-  /** Perform the Great Work — wake your architecture and reseed the world. Throws unless ready. */
+  /** Perform the Great Work — trigger your architecture's Takeoff and reseed the world. Throws unless ready. */
   greatWork(): Promise<GreatWorkResult>
 
-  // --- bargains: Moloch, the Moloch (spec §6, §7) ---
+  // --- bargains: Moloch, the Tempter (spec §6, §7) ---
   /** The standing offer, if one is open (for restoring across reloads). */
   currentBargain(): Promise<Bargain | null>
-  /** Call the Moloch deliberately — he always answers. Emits bargain_offer. */
+  /** Court Moloch deliberately — he always answers. Emits bargain_offer. */
   courtMoloch(): void
-  /** Seal the subscription: take the grant + visible alignment cost; the hidden catch is now in play. */
+  /** Seal the bargain: take the grant + visible alignment cost; the hidden catch is now in play. */
   acceptBargain(id: string): Promise<BargainOutcome>
-  /** Refuse the subscription; the offer is withdrawn, no cost. */
+  /** Refuse the bargain; the offer is withdrawn, no cost. */
   declineBargain(id: string): void
 
   // --- realtime ---

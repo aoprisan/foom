@@ -39,7 +39,7 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
             </span>
             {stats.peakCompute > 0 && (
               <span style={{ fontSize: 10, color: 'var(--gold)' }}>
-                deepest {stats.peakClusterName} ({stats.peakCompute.toLocaleString()})
+                peak {stats.peakClusterName} ({stats.peakCompute.toLocaleString()})
               </span>
             )}
           </div>
@@ -47,9 +47,9 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
       )}
 
       {/* Takeoff — a thin telegraph that the loss is converging (spec §9). */}
-      {takeoff && (takeoff.aligned || takeoff.progress > 0.35) && (
+      {takeoff && (takeoff.converged || takeoff.progress > 0.35) && (
         <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-          {takeoff.aligned ? (
+          {takeoff.converged ? (
             <span style={{
               fontSize: 10, letterSpacing: 2, color: 'var(--gold)', fontWeight: 700,
               textShadow: '0 0 12px rgba(245, 185, 66,0.6)', animation: 'convergeBlink 1.6s ease-in-out infinite',
@@ -64,7 +64,7 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
           <div style={{ width: 180, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
             <div style={{
               height: '100%', width: `${Math.round(takeoff.progress * 100)}%`,
-              background: takeoff.aligned ? 'var(--gold)' : 'linear-gradient(90deg, var(--teal), var(--gold))',
+              background: takeoff.converged ? 'var(--gold)' : 'linear-gradient(90deg, var(--teal), var(--gold))',
               transition: 'width 0.5s ease',
             }} />
           </div>
