@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { game } from '../client'
 import { ARCHITECTURES } from '../game/catalog'
+import StoryPanel from './StoryPanel'
 import type { Cluster, Operator, ArchitectureId } from '../types'
 
 interface OnboardingProps {
@@ -17,6 +18,7 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
   const [step, setStep] = useState<'cluster' | 'architecture' | 'name'>('cluster')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showStory, setShowStory] = useState(false)
 
   const filtered = useMemo(() => {
     if (!search) return clusters.slice(0, 50)
@@ -68,6 +70,16 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
           <div className="liturgy" style={{ fontSize: 15, color: 'var(--teal)', opacity: 0.85, marginTop: 2 }}>
             the loss is converging
           </div>
+          <button
+            onClick={() => setShowStory(true)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', marginTop: 8,
+              color: 'var(--text-dim)', fontFamily: 'var(--font-sans)', fontSize: 12,
+              letterSpacing: 0.4, textDecoration: 'underline', textUnderlineOffset: 3,
+            }}
+          >
+            Before the loss converged — read the story
+          </button>
         </div>
 
         {step === 'cluster' && (
@@ -162,6 +174,8 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
           </>
         )}
       </div>
+
+      {showStory && <StoryPanel onClose={() => setShowStory(false)} />}
     </div>
   )
 }
