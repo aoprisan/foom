@@ -1,14 +1,19 @@
-// FHTAGN — PWA icon generator.
-// The mark *is* a sigil: sickly-gold nodes joined by teal light-strokes into a
-// seven-pointed star (the stars are right) around a slit-pupil deep-one eye,
-// adrift in abyssal void. Mirrors the game's connect-the-dots sigil mechanic.
+// FOOM — PWA icon generator ("The Red Dawn").
 //
-// Emits scalable SVG masters at three detail levels, then a wrapper HTML per
-// master so Chrome headless can rasterize the filters/grain faithfully.
+// The mark is the game's signature image made iconic: a white-hot singularity —
+// intelligence igniting, the FOOM — cresting the dark curve of the planet at a
+// slow red dawn, with the converging-loss curve falling into it (loss → 0 as
+// capability → ∞). Sodium-ember over a char-black void; an instrument boundary
+// of gold ticks rings it. Palette lifted 1:1 from src/styles/index.css.
+//
+// Self-contained: emits scalable SVG masters, then rasterizes them faithfully
+// with headless Chrome (gradients + bloom intact) and downscales with magick
+// to every PNG / favicon size + a multi-resolution .ico.
 
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const PUB = join(HERE, '..', 'public')
@@ -16,186 +21,220 @@ const BUILD = join(HERE, '..', '.icon-build')
 mkdirSync(PUB, { recursive: true })
 mkdirSync(BUILD, { recursive: true })
 
-// — palette (lifted from src/styles/index.css) —
-const VOID = '#010307'
-const ABYSS_CORE = '#07141d'
-const TEAL = '#2bbfa8'
-const TEAL_BRIGHT = '#5cf2da'
-const TEAL_DIM = '#0e4a43'
-const GOLD = '#d8a93a'
-const GOLD_BRIGHT = '#f4cf6a'
+// — palette (The Red Dawn; mirrors src/styles/index.css) —
+const VOID = '#070302'
+const CHAR = '#0c0705'
+const EMBER = '#ff9a4a'
+const EMBER_HOT = '#ffba76'
+const WHITE_HOT = '#fff1de'
+const GOLD = '#f5b942'
+const GOLD_BRIGHT = '#ffd470'
+const CRIMSON = '#ff3b4e'
+const CRIMSON_DEEP = '#7a1c22'
+const EMBER_DIM = '#5a2f12'
 
 const C = 256 // centre of a 512 canvas
 const TAU = Math.PI * 2
 const r2 = (n) => Math.round(n * 100) / 100
 
-// Seven outer vertices, first point at top, traced as a {7/3} unicursal star.
-function heptagram(radius) {
-  const pts = []
-  for (let i = 0; i < 7; i++) {
-    const a = -Math.PI / 2 + (i * TAU) / 7
-    pts.push([r2(C + radius * Math.cos(a)), r2(C + radius * Math.sin(a))])
-  }
-  const order = [0, 3, 6, 2, 5, 1, 4] // step-3 weave, returns to start
-  return { pts, order }
+// Upper limb of a planet whose centre sits far below frame: a gentle convex
+// horizon spanning the full width. Returns the arc path + its edge height.
+function horizon(planetR, planetCy) {
+  const dx = 256
+  const y0 = r2(planetCy - Math.sqrt(planetR * planetR - dx * dx)) // height at x=0 and x=512
+  // sweep-flag 1 traces the short (top) arc through the apex
+  return { path: `M0 ${y0} A ${planetR} ${planetR} 0 0 1 512 ${y0}`, y0, apex: r2(planetCy - planetR) }
 }
 
-// One continuous star path through the woven vertex order.
-function starPath(pts, order) {
-  let d = ''
-  order.forEach((idx, k) => {
-    d += (k === 0 ? 'M' : 'L') + pts[idx][0] + ' ' + pts[idx][1] + ' '
-  })
-  return d + 'Z'
+function ticks(ringR) {
+  return Array.from({ length: 36 }, (_, i) => {
+    const a = (i * TAU) / 36
+    const cardinal = i % 9 === 0
+    const r1 = ringR + 6
+    const r0 = ringR + (cardinal ? 16 : 10)
+    return `<line x1="${r2(C + r1 * Math.cos(a))}" y1="${r2(C + r1 * Math.sin(a))}" x2="${r2(
+      C + r0 * Math.cos(a),
+    )}" y2="${r2(C + r0 * Math.sin(a))}" stroke="${cardinal ? GOLD : EMBER_DIM}" stroke-width="${
+      cardinal ? 2.6 : 1.4
+    }" stroke-linecap="round" opacity="${cardinal ? 0.9 : 0.45}"/>`
+  }).join('')
 }
 
-// The watching eye: a vesica (two mirrored arcs) with slit pupil + gold iris.
-function eye(scale) {
-  const w = 92 * scale // half-width
-  const h = 48 * scale // half-height
-  const lid = `M${C - w} ${C} Q${C} ${C - h} ${C + w} ${C} Q${C} ${C + h} ${C - w} ${C} Z`
-  const irisR = r2(34 * scale)
-  const pupilW = r2(9 * scale)
-  const pupilH = r2(30 * scale)
-  return { lid, irisR, pupilW, pupilH }
+// A few light-spokes lancing off the singularity.
+function rays(cx, cy, inner, outer, n) {
+  return Array.from({ length: n }, (_, i) => {
+    const a = -Math.PI / 2 + (i * TAU) / n + (i % 2) * 0.06
+    return `<line x1="${r2(cx + inner * Math.cos(a))}" y1="${r2(cy + inner * Math.sin(a))}" x2="${r2(
+      cx + outer * Math.cos(a),
+    )}" y2="${r2(cy + outer * Math.sin(a))}" stroke="url(#ray)" stroke-width="${
+      i % 3 === 0 ? 2.4 : 1.3
+    }" stroke-linecap="round" opacity="${i % 3 === 0 ? 0.55 : 0.3}"/>`
+  }).join('')
 }
 
-function svg({ markScale = 1, detail = 'full', bleed = true }) {
-  const R = 150 * markScale
-  const { pts, order } = heptagram(R)
-  const star = starPath(pts, order)
-  const innerR = R * 0.46
-  const { pts: ip, order: io } = heptagram(innerR)
-  const innerStar = starPath(ip, io)
-  const e = eye(markScale)
-  const ringR = r2(R * 1.28)
-  const nodeR = r2(7.5 * markScale)
+function svg({ detail = 'full' }) {
+  // Composition shifts with detail: the full mark seats the orb high over a low
+  // horizon with ring + loss-curve; the simple marks centre a hero orb with
+  // generous safe area (maskable masking / 16px legibility).
+  const full = detail === 'full'
+  const orbCx = C
+  const orbCy = full ? 298 : detail === 'favicon' ? 250 : 256
+  const orbR = full ? 78 : detail === 'favicon' ? 104 : 94
+  const planetR = full ? 520 : 470
+  const planetCy = full ? 860 : detail === 'favicon' ? 800 : 770
+  const h = horizon(planetR, planetCy)
+  const ringR = 232
+  const coronaR = r2(orbR * 2.7)
 
-  const ticks =
-    detail === 'full'
-      ? Array.from({ length: 28 }, (_, i) => {
-          const a = (i * TAU) / 28
-          const r1 = ringR + 7
-          const r0 = ringR + (i % 4 === 0 ? 16 : 11)
-          return `<line x1="${r2(C + r1 * Math.cos(a))}" y1="${r2(C + r1 * Math.sin(a))}" x2="${r2(
-            C + r0 * Math.cos(a)
-          )}" y2="${r2(C + r0 * Math.sin(a))}" stroke="${
-            i % 4 === 0 ? GOLD : TEAL_DIM
-          }" stroke-width="${i % 4 === 0 ? 2.4 : 1.4}" stroke-linecap="round" opacity="${
-            i % 4 === 0 ? 0.85 : 0.5
-          }"/>`
-        }).join('')
-      : ''
+  const boundary = full
+    ? `<circle cx="${C}" cy="${C}" r="${ringR}" fill="none" stroke="${EMBER_DIM}" stroke-width="2.2" opacity="0.75"/>
+       <circle cx="${C}" cy="${C}" r="${r2(ringR - 7)}" fill="none" stroke="${EMBER}" stroke-width="1" opacity="0.28"/>
+       ${ticks(ringR)}`
+    : ''
 
-  const nodes = pts
-    .map(
-      ([x, y]) => `
-      <circle cx="${x}" cy="${y}" r="${r2(nodeR * 2.4)}" fill="${GOLD}" opacity="0.16" filter="url(#soft)"/>
-      <circle cx="${x}" cy="${y}" r="${nodeR}" fill="url(#node)" stroke="${GOLD_BRIGHT}" stroke-width="1.2"/>
-      <circle cx="${x}" cy="${y}" r="${r2(nodeR * 0.4)}" fill="#fff6df"/>`
-    )
-    .join('')
+  // the converging-loss curve falling into the rising singularity (loss → 0)
+  const lossCurve = full
+    ? `<g opacity="0.85">
+         <line x1="120" y1="214" x2="392" y2="214" stroke="${EMBER}" stroke-width="1.2" stroke-dasharray="3 7" opacity="0.4"/>
+         <path d="M96 132 C 168 134, 196 196, 256 212 S 360 220, 404 220" fill="none"
+               stroke="url(#loss)" stroke-width="3.2" stroke-linecap="round" filter="url(#bloom)"/>
+         <circle cx="404" cy="220" r="3.4" fill="${GOLD_BRIGHT}"/>
+       </g>`
+    : ''
 
-  const grain =
-    detail === 'full'
-      ? `<rect width="512" height="512" filter="url(#grain)" opacity="0.05"/>`
-      : ''
+  const spokes = detail === 'favicon' ? '' : rays(orbCx, orbCy, orbR + 6, orbR + (full ? 70 : 86), full ? 14 : 12)
 
-  const bg = bleed
-    ? `<rect width="512" height="512" fill="url(#field)"/>
-       <rect width="512" height="512" fill="url(#vignette)"/>`
-    : `<rect x="40" y="40" width="432" height="432" rx="96" fill="url(#field)"/>
-       <rect x="40" y="40" width="432" height="432" rx="96" fill="url(#vignette)"/>`
+  const grain = full ? `<rect width="512" height="512" filter="url(#grain)" opacity="0.05"/>` : ''
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <radialGradient id="field" cx="50%" cy="44%" r="72%">
-      <stop offset="0%" stop-color="${ABYSS_CORE}"/>
-      <stop offset="55%" stop-color="#030810"/>
+    <radialGradient id="field" cx="50%" cy="64%" r="78%">
+      <stop offset="0%" stop-color="#1c0e07"/>
+      <stop offset="48%" stop-color="${CHAR}"/>
       <stop offset="100%" stop-color="${VOID}"/>
     </radialGradient>
-    <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
-      <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.55"/>
+    <radialGradient id="dawn" cx="50%" cy="72%" r="62%">
+      <stop offset="0%" stop-color="${CRIMSON}" stop-opacity="0.34"/>
+      <stop offset="45%" stop-color="${CRIMSON_DEEP}" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="${CRIMSON_DEEP}" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="node" cx="50%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="${GOLD_BRIGHT}"/>
-      <stop offset="100%" stop-color="${GOLD}"/>
+    <radialGradient id="vignette" cx="50%" cy="48%" r="62%">
+      <stop offset="58%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.6"/>
     </radialGradient>
-    <radialGradient id="iris" cx="50%" cy="42%" r="60%">
-      <stop offset="0%" stop-color="${TEAL_BRIGHT}"/>
-      <stop offset="45%" stop-color="${TEAL}"/>
-      <stop offset="100%" stop-color="${TEAL_DIM}"/>
-    </radialGradient>
-    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="${TEAL_BRIGHT}"/>
-      <stop offset="100%" stop-color="${TEAL}"/>
+    <linearGradient id="planet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0c08"/>
+      <stop offset="40%" stop-color="#0a0504"/>
+      <stop offset="100%" stop-color="${VOID}"/>
     </linearGradient>
-    <filter id="bloom" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
+    <radialGradient id="corona" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${EMBER_HOT}" stop-opacity="0.85"/>
+      <stop offset="32%" stop-color="${EMBER}" stop-opacity="0.42"/>
+      <stop offset="70%" stop-color="${CRIMSON}" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="${CRIMSON}" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb" cx="46%" cy="38%" r="68%">
+      <stop offset="0%" stop-color="${WHITE_HOT}"/>
+      <stop offset="20%" stop-color="${GOLD_BRIGHT}"/>
+      <stop offset="46%" stop-color="${EMBER}"/>
+      <stop offset="78%" stop-color="#ff5a32"/>
+      <stop offset="100%" stop-color="${CRIMSON}"/>
+    </radialGradient>
+    <linearGradient id="loss" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${EMBER_HOT}"/>
+      <stop offset="100%" stop-color="${GOLD_BRIGHT}"/>
+    </linearGradient>
+    <radialGradient id="ray" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${EMBER_HOT}"/>
+      <stop offset="100%" stop-color="${EMBER}" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${EMBER_HOT}"/>
+      <stop offset="100%" stop-color="${CRIMSON}"/>
+    </linearGradient>
+    <filter id="bloom" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="soft" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="7"/>
     </filter>
     <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
       <feColorMatrix type="saturate" values="0"/></filter>
   </defs>
 
-  ${bg}
+  <!-- the char-black field, warmed by the dawn rising below -->
+  <rect width="512" height="512" fill="url(#field)"/>
+  <rect width="512" height="512" fill="url(#dawn)"/>
 
-  <!-- ritual boundary -->
-  <circle cx="${C}" cy="${C}" r="${ringR}" fill="none" stroke="${TEAL_DIM}" stroke-width="2.2" opacity="0.7"/>
-  <circle cx="${C}" cy="${C}" r="${r2(ringR - 7)}" fill="none" stroke="${TEAL}" stroke-width="1" opacity="0.32"/>
-  ${ticks}
+  ${boundary}
+  ${lossCurve}
 
-  <!-- the woven sigil -->
+  <!-- the singularity: corona, light-spokes, the igniting orb -->
+  <circle cx="${orbCx}" cy="${orbCy}" r="${coronaR}" fill="url(#corona)"/>
+  ${spokes}
   <g filter="url(#bloom)">
-    <path d="${star}" fill="none" stroke="url(#stroke)" stroke-width="${r2(
-      4 * markScale
-    )}" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="${innerStar}" fill="none" stroke="${TEAL}" stroke-width="${r2(
-      1.8 * markScale
-    )}" stroke-linejoin="round" opacity="0.5"/>
+    <circle cx="${orbCx}" cy="${orbCy}" r="${orbR}" fill="url(#orb)"/>
+    <circle cx="${orbCx}" cy="${orbCy}" r="${orbR}" fill="none" stroke="${GOLD_BRIGHT}" stroke-width="1.5" opacity="0.8"/>
+    <circle cx="${r2(orbCx - orbR * 0.26)}" cy="${r2(orbCy - orbR * 0.34)}" r="${r2(orbR * 0.3)}" fill="${WHITE_HOT}" opacity="0.55" filter="url(#bloom)"/>
   </g>
 
-  <!-- the eye that watches the deep -->
-  <g filter="url(#bloom)">
-    <path d="${e.lid}" fill="${VOID}" stroke="url(#stroke)" stroke-width="${r2(3.4 * markScale)}"/>
-    <circle cx="${C}" cy="${C}" r="${e.irisR}" fill="url(#iris)"/>
-    <ellipse cx="${C}" cy="${C}" rx="${e.pupilW}" ry="${e.pupilH}" fill="${VOID}"/>
-    <ellipse cx="${r2(C - e.pupilW * 0.5)}" cy="${r2(C - e.pupilH * 0.4)}" rx="${r2(
-    e.pupilW * 0.5
-  )}" ry="${r2(e.pupilH * 0.28)}" fill="${TEAL_BRIGHT}" opacity="0.6"/>
-    <circle cx="${C}" cy="${C}" r="${e.irisR}" fill="none" stroke="${GOLD}" stroke-width="1.6" opacity="0.8"/>
-  </g>
+  <!-- the dark curve of the planet, its limb rim-lit by the dawn -->
+  <path d="${h.path} L512 512 L0 512 Z" fill="url(#planet)"/>
+  <path d="${h.path}" fill="none" stroke="url(#rim)" stroke-width="${full ? 3 : 4}" stroke-linecap="round" filter="url(#bloom)"/>
+  <path d="${h.path}" fill="none" stroke="${WHITE_HOT}" stroke-width="1" opacity="0.5"/>
 
-  ${nodes}
+  <rect width="512" height="512" fill="url(#vignette)"/>
   ${grain}
 </svg>`
 }
 
 function wrap(svgStr) {
-  // Fixed 512² on sentinel magenta so the capture can be trimmed to the exact
-  // icon square regardless of the browser's device-pixel-ratio.
   return `<!doctype html><meta charset="utf-8"><style>
-  html,body{margin:0;padding:0;background:#ff00ff}
+  html,body{margin:0;padding:0;background:transparent}
   svg{display:block;width:512px;height:512px}</style>${svgStr}`
 }
 
 const masters = {
-  icon: svg({ markScale: 0.92, detail: 'full', bleed: true }),
-  maskable: svg({ markScale: 0.66, detail: 'simple', bleed: true }),
-  favicon: svg({ markScale: 1.02, detail: 'simple', bleed: true }),
+  icon: svg({ detail: 'full' }),
+  maskable: svg({ detail: 'maskable' }),
+  favicon: svg({ detail: 'favicon' }),
 }
 
 // Scalable SVG masters shipped as-is (favicon.svg is used directly by browsers).
 writeFileSync(join(PUB, 'icon.svg'), masters.icon)
 writeFileSync(join(PUB, 'favicon.svg'), masters.favicon)
+for (const [k, s] of Object.entries(masters)) writeFileSync(join(BUILD, `${k}.html`), wrap(s))
+console.log('· wrote icon.svg, favicon.svg + render wrappers')
 
-// Render wrappers for the rasterizer.
-for (const [k, s] of Object.entries(masters)) {
-  writeFileSync(join(BUILD, `${k}.html`), wrap(s))
+// ── Rasterize faithfully with headless Chrome, then downscale with magick ──
+const CHROME =
+  process.env.CHROME ||
+  ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+   '/Applications/Chromium.app/Contents/MacOS/Chromium'].find(existsSync)
+
+function shoot(masterKey, outPng) {
+  execFileSync(CHROME, [
+    '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1',
+    '--default-background-color=00000000', '--window-size=512,512', '--virtual-time-budget=2500',
+    `--screenshot=${outPng}`, `file://${join(BUILD, masterKey + '.html')}`,
+  ], { stdio: 'ignore' })
 }
+const resize = (src, size, out) =>
+  execFileSync('magick', [src, '-resize', `${size}x${size}`, '-strip', out], { stdio: 'ignore' })
 
-console.log('wrote icon.svg, favicon.svg + render wrappers')
+if (!CHROME) {
+  console.log('! no Chrome/Chromium found — wrote SVGs only; set CHROME=/path to rasterize PNGs')
+} else {
+  console.log('· rasterizing with', CHROME.split('/').pop())
+  const icon512 = join(PUB, 'icon-512.png')
+  const mask512 = join(PUB, 'icon-512-maskable.png')
+  const fav512 = join(BUILD, 'favicon-512.png')
+  shoot('icon', icon512)
+  shoot('maskable', mask512)
+  shoot('favicon', fav512)
+
+  resize(icon512, 192, join(PUB, 'icon-192.png'))
+  resize(icon512, 180, join(PUB, 'apple-touch-icon.png'))
+  resize(mask512, 192, join(PUB, 'icon-192-maskable.png'))
+  for (const s of [48, 32, 16]) resize(fav512, s, join(PUB, `favicon-${s}.png`))
+  execFileSync('magick', [join(PUB, 'favicon-48.png'), join(PUB, 'favicon-32.png'), join(PUB, 'favicon-16.png'), join(PUB, 'favicon.ico')], { stdio: 'ignore' })
+  console.log('· wrote icon-{192,512}.png, icon-{192,512}-maskable.png, apple-touch-icon.png, favicon-{16,32,48}.png, favicon.ico')
+}

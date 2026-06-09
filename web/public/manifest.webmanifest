@@ -4,8 +4,8 @@
   "description": "Found a compute cluster, train, craft prompts to release exploits, and race rival labs to trigger Takeoff.",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#00030a",
-  "theme_color": "#02050e",
+  "background_color": "#070302",
+  "theme_color": "#0c0705",
   "icons": [
     { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" },
     { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
