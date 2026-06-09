@@ -3,7 +3,7 @@ import { ARCHITECTURE_BY_ID } from '../game/catalog'
 
 interface OperatorPanelProps {
   operator: Operator
-  personalChants: number
+  personalSteps: number
   clusterName?: string
 }
 
@@ -13,7 +13,7 @@ const TIER_LABEL: Record<string, string> = {
   labDirector: 'Lab Director',
 }
 
-export default function OperatorPanel({ operator, personalChants, clusterName }: OperatorPanelProps) {
+export default function OperatorPanel({ operator, personalSteps, clusterName }: OperatorPanelProps) {
   const architecture = operator.architectureId ? ARCHITECTURE_BY_ID[operator.architectureId] : null
   return (
     <div className="panel player-panel" style={{
@@ -31,14 +31,14 @@ export default function OperatorPanel({ operator, personalChants, clusterName }:
         </div>
         {architecture && (
           <div style={{ fontSize: 11, color: architecture.color, marginTop: 2 }}>
-            serves {architecture.name}
+            builds {architecture.name}
           </div>
         )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <StatRow label="Compute raised" value={personalChants.toLocaleString()} color="var(--gold)" />
-        {operator.usersCaptured > 0 && <StatRow label="Souls claimed" value={operator.usersCaptured.toLocaleString()} color="var(--crimson)" />}
+        <StatRow label="Compute raised" value={personalSteps.toLocaleString()} color="var(--gold)" />
+        {operator.usersCaptured > 0 && <StatRow label="Users captured" value={operator.usersCaptured.toLocaleString()} color="var(--crimson)" />}
         {operator.best10s > 0 && <StatRow label="Best 10s" value={operator.best10s.toLocaleString()} />}
         {(operator.todaySteps !== undefined && operator.todaySteps > 0) && <StatRow label="Today" value={operator.todaySteps.toLocaleString()} />}
         {operator.best1day > 0 && <StatRow label="Best 1 day" value={operator.best1day.toLocaleString()} />}

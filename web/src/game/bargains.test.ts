@@ -21,8 +21,8 @@ describe('rollBargain', () => {
     expect(grants).toHaveLength(1)
   })
 
-  it('never tempts a aligned mind with the deep-only templates (clarity, tome)', () => {
-    // At full evaluation only gift/swarm are eligible — pick() lands on each via rng.
+  it('never tempts an aligned lab with the deep-only templates (pass, forbidden)', () => {
+    // At full alignment only capability/surge are eligible — pick() lands on each via rng.
     for (const r of [0, 0.49, 0.99]) {
       const b = rollBargain(100, 'x', () => r)!
       expect(['capability', 'surge']).toContain(b.kind)

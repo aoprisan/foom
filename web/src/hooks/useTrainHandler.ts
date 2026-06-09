@@ -12,11 +12,11 @@ const RATE_WINDOW = 60_000 // 60 seconds
  */
 export function useTrainHandler(
   operator: Operator | null,
-  onOptimisticChant: () => void,
+  onOptimisticTrain: () => void,
 ) {
-  const [pendingChants, setPendingChants] = useState(0)
-  const serverChantsRef = useRef(0)
-  const chantTimestamps = useRef<number[]>([])
+  const [pendingSteps, setPendingSteps] = useState(0)
+  const serverStepsRef = useRef(0)
+  const trainTimestamps = useRef<number[]>([])
 
   const [rateLimited, setRateLimited] = useState(false)
   const rateLimitTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -24,37 +24,37 @@ export function useTrainHandler(
 
   const multiplier = operator?.tier === 'labDirector' ? 2 : 1
 
-  const handleChant = useCallback(() => {
+  const handleTrain = useCallback(() => {
     if (!operator || operator.tier === 'observer') return
 
     const now = Date.now()
-    chantTimestamps.current = chantTimestamps.current.filter(t => now - t < RATE_WINDOW)
-    if (chantTimestamps.current.length >= RATE_LIMIT) {
+    trainTimestamps.current = trainTimestamps.current.filter(t => now - t < RATE_WINDOW)
+    if (trainTimestamps.current.length >= RATE_LIMIT) {
       setRateLimited(true)
       clearTimeout(rateLimitTimer.current)
       rateLimitTimer.current = setTimeout(() => setRateLimited(false), 2000)
       return
     }
-    chantTimestamps.current.push(now)
+    trainTimestamps.current.push(now)
 
-    setPendingChants(prev => prev + multiplier)
-    onOptimisticChant()
+    setPendingSteps(prev => prev + multiplier)
+    onOptimisticTrain()
 
     game.train()
-  }, [operator, onOptimisticChant, multiplier])
+  }, [operator, onOptimisticTrain, multiplier])
 
   // Called when the world confirms our home cluster's compute via cluster_update.
   const reconcile = useCallback((serverTotal: number) => {
-    const prevServer = serverChantsRef.current
-    serverChantsRef.current = serverTotal
+    const prevServer = serverStepsRef.current
+    serverStepsRef.current = serverTotal
     if (prevServer === 0) return
     const confirmed = serverTotal - prevServer
-    setPendingChants(prev => Math.max(0, prev - confirmed))
+    setPendingSteps(prev => Math.max(0, prev - confirmed))
   }, [])
 
-  const personalChants = (serverChantsRef.current || (operator?.totalSteps ?? 0)) + pendingChants
+  const personalSteps = (serverStepsRef.current || (operator?.totalSteps ?? 0)) + pendingSteps
 
-  return { handleChant, personalChants, pendingChants, rateLimited, multiplier, reconcile }
+  return { handleTrain, personalSteps, pendingSteps, rateLimited, multiplier, reconcile }
 }
 
 export type { Tier }

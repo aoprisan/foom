@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  canConvert, greatWorkScore, worldAlignment, spreadCost,
+  canConvert, greatWorkScore, worldConvergence, spreadCost,
   SPREAD_RANGE_KM, GREAT_WORK_GOAL, RESEARCH_WEIGHT, DEPLOYMENT_WEIGHT,
 } from './takeoff'
 import type { Cluster, ArchitectureId } from '../types'
@@ -25,10 +25,10 @@ describe('canConvert', () => {
     const target = cluster({ id: 't', lat: 0, lng: 90, architectureId: null })   // ~10,000km away
     const r = canConvert(home, target, 'shoggoth')
     expect(r.ok).toBe(false)
-    expect(r.reason).toMatch(/deployment/i)
+    expect(r.reason).toMatch(/buildout/i)
   })
 
-  it('refuses a cluster already sworn to your architecture', () => {
+  it('refuses a cluster already running your architecture', () => {
     const home = cluster({ id: 'h', architectureId: 'prometheus' })
     const target = cluster({ id: 't', lat: 0, lng: 1, architectureId: 'prometheus' })
     expect(canConvert(home, target, 'prometheus').ok).toBe(false)
@@ -69,28 +69,28 @@ describe('greatWorkScore', () => {
   })
 })
 
-describe('worldAlignment', () => {
+describe('worldConvergence', () => {
   it('reports the foremost cluster and clamps progress to 1', () => {
     const clusters = [
       cluster({ id: 'a', compute: 200_000, architectureId: 'shoggoth' as ArchitectureId }),
       cluster({ id: 'b', compute: 2 * GREAT_WORK_GOAL, architectureId: 'prometheus' as ArchitectureId }),
     ]
-    const v = worldAlignment(clusters)
+    const v = worldConvergence(clusters)
     expect(v.leader?.id).toBe('b')
     expect(v.progress).toBe(1)
-    expect(v.aligned).toBe(true)
+    expect(v.converged).toBe(true)
   })
 
-  it('is not aligned while every cluster sits below the goal', () => {
-    const v = worldAlignment([cluster({ compute: GREAT_WORK_GOAL - 1 })])
-    expect(v.aligned).toBe(false)
+  it('has not converged while every cluster sits below the goal', () => {
+    const v = worldConvergence([cluster({ compute: GREAT_WORK_GOAL - 1 })])
+    expect(v.converged).toBe(false)
     expect(v.progress).toBeLessThan(1)
   })
 
   it('handles an empty world', () => {
-    const v = worldAlignment([])
+    const v = worldConvergence([])
     expect(v.leader).toBeNull()
     expect(v.progress).toBe(0)
-    expect(v.aligned).toBe(false)
+    expect(v.converged).toBe(false)
   })
 })

@@ -1,5 +1,10 @@
 # FOOM Concept Review — what survived the FHTAGN reskin, and what shouldn't have
 
+> **Status: implemented.** All five phases of the plan in §6 have landed on this branch
+> (debris pass, convergence rename, alignment-economy rebalance via the new
+> `web/src/game/alignment.ts`, range refiction + global Cascade III, and the spec
+> reconciliation). §3 of the plan still wants live playtesting for balance, per spec §16.
+
 A review of the game concept (spec + current `web/` implementation) focused on one
 question: **which gameplay concepts inherited from the Lovecraft original (FHTAGN) no
 longer make sense in the AI-acceleration theme?** Findings are ordered by how much they

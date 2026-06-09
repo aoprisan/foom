@@ -74,7 +74,7 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
         <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>{cluster.country}</span>
         {architecture && (
           <div style={{ fontSize: 11, color: architecture.color, marginTop: 4 }}>
-            sworn to {architecture.name}
+            runs {architecture.name}
           </div>
         )}
       </div>
@@ -99,7 +99,7 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
         )}
 
         {cluster.peakCompute > 0 && cluster.peakCompute !== cluster.compute && (
-          <Row label="Deepest ever" value={cluster.peakCompute.toLocaleString()} />
+          <Row label="Peak compute" value={cluster.peakCompute.toLocaleString()} />
         )}
 
         <Row label="Researchers" value={cluster.contributorCount.toLocaleString()} />
@@ -109,7 +109,7 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
         )}
 
         {cluster.claimed > 0 && (
-          <Row label="The claimed" value={cluster.claimed.toLocaleString()} color="var(--crimson)" />
+          <Row label="Compute lost" value={cluster.claimed.toLocaleString()} color="var(--crimson)" />
         )}
 
         {(cluster.deployment > 0 || isHome) && (

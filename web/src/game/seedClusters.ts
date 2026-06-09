@@ -1,4 +1,4 @@
-// Auto-generated seed of real cult clusters (from the prototype GeoNames set).
+// Auto-generated seed of real lab clusters (from the prototype GeoNames set).
 // ~169 globally-spread cities; lat/lng/name/country are real.
 export interface SeedCluster { id: string; name: string; country: string; countryCode: string; lat: number; lng: number }
 
