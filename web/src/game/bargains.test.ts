@@ -30,7 +30,7 @@ describe('rollBargain', () => {
   })
 
   it('makes the gamble sharper as alignment falls: deeper offers carry a higher catch chance', () => {
-    // Same template (gift = first eligible, rng→0 picks it) at high vs low alignment.
+    // Same template (capability = first eligible, rng→0 picks it) at high vs low alignment.
     const aligned = rollBargain(95, 'a', seq([0, 0, 0, 0]))!
     const fraying = rollBargain(20, 'b', seq([0, 0, 0, 0]))!
     expect(aligned.kind).toBe('capability')

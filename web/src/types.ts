@@ -90,11 +90,12 @@ export interface Subscription {
 // ---- Bargains: Moloch, the Tempter (spec §4 "seal a bargain", §6, §7, §11) ----
 //
 // A bargain is a genuine gamble, not a timer to optimise (spec §7, the #1 thing
-// to get right): the power grant and the immediate alignment cost are *shown*; the
-// catch is *hidden*. The flavour hints at a price, but its chance and magnitude
-// are concealed, and it springs probabilistically over a later window — so you
-// cannot reduce accepting to a known trade. Delve deeper (lower alignment) and the
-// offers get stronger AND the catches get worse: the delve→gain→claw-back loop.
+// to get right): the competitive upside and the immediate alignment cost are
+// *shown*; the catch is *hidden*. The framing hints at downstream exposure, but
+// its chance and magnitude are concealed, and it springs probabilistically over a
+// later window — so you cannot reduce accepting pressure to a known trade. Delve
+// deeper (lower alignment) and the offers get stronger AND the catches get worse:
+// the delve→gain→claw-back loop.
 
 export type BargainKind =
   | 'capability'     // a forbidden exploit, freely given
@@ -107,7 +108,7 @@ export type BargainCatchKind =
   | 'defection'      // operators turn; compute and contributors bleed away
   | 'false-alignment'  // the offered calm collapses; alignment crashes below where it began
 
-/** The hidden price. Never shown numerically to the player — only the flavour hints it. */
+/** The hidden downstream exposure. Never shown numerically to the player — only the framing hints it. */
 export interface BargainCatch {
   kind: BargainCatchKind
   chance: number            // P(springs at all) over the window — hidden from the UI

@@ -12,9 +12,9 @@ const STAND_SECONDS = 14
 
 /**
  * Moloch's offer (spec §6, §7). The grant and the alignment cost are shown;
- * the catch is *not* — only the flavour hints it, and a standing reminder that
- * the price is unnamed. That asymmetry is the gamble. Refusing costs nothing;
- * letting the countdown lapse refuses for you.
+ * the catch is *not* — only the framing hints it, and a standing reminder that
+ * downstream exposure is unmodeled. That asymmetry is the gamble. Refusing
+ * costs nothing; letting the countdown lapse refuses for you.
  *
  * Moloch is sacral gold — the prize, the race to the bottom — not the Churn's
  * cold violet. The card burns like an offer plate held over the fire.
@@ -59,7 +59,7 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
       padding: 18, animation: 'molochIn 0.4s ease-out',
     }}>
       <div className="eyebrow" style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: 2, marginBottom: 6 }}>
-        Moloch, the Tempter · a bargain
+        Moloch · coordination failure
       </div>
       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 26, lineHeight: 1.15, letterSpacing: 1.5, color: 'var(--bone)', marginBottom: 10, textShadow: '0 0 20px rgba(255,180,84,0.3)' }}>
         {bargain.title}
@@ -69,13 +69,13 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-        <Row label="It offers" value={bargain.grantLabel} color="var(--teal)" />
+        <Row label="Upside" value={bargain.grantLabel} color="var(--teal)" />
         <Row
-          label="It asks"
-          value={bargain.alignmentCost > 0 ? `${bargain.alignmentCost} alignment, now` : 'nothing — it says'}
+          label="Tradeoff"
+          value={bargain.alignmentCost > 0 ? `${bargain.alignmentCost} alignment, now` : 'no immediate alignment cost'}
           color="var(--gold)"
         />
-        <Row label="The price" value="unnamed, and later" color="var(--crimson)" />
+        <Row label="Exposure" value="unmodeled, downstream" color="var(--crimson)" />
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
@@ -84,10 +84,10 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
           className="console-key console-key--solid"
           style={{ flex: 1, padding: '10px 0', ...( { '--key': 'var(--gold)' } as React.CSSProperties) }}
         >
-          Seal the bargain
+          Accept pressure
         </button>
         <button onClick={decline} className="console-key console-key--ghost" style={{ flex: 1, padding: '10px 0' }}>
-          Refuse
+          Hold review
         </button>
       </div>
 

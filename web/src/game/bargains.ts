@@ -55,8 +55,8 @@ const FORBIDDEN_POOL = ['Release III', 'Cascade I', 'Cascade II']
 const TEMPLATES: Template[] = [
   {
     kind: 'capability',
-    title: 'A Shortcut',
-    flavor: 'Moloch offers the capability now, with a shrug. “Someone ships it this quarter. Better you than a rival — I only collect later, and only once.”',
+    title: 'Ship the Benchmark',
+    flavor: 'A rival model clears the eval suite before your safety review leaves draft. The board wants parity by Friday. Moloch calls it responsible acceleration.',
     catchKind: 'optimizer',
     band: [0, 100],
     window: 8,
@@ -64,7 +64,7 @@ const TEMPLATES: Template[] = [
       const t = pushT(alignment)
       const exploitType = pick(alignment < 45 ? CAPABILITY_POOL_DEEP : CAPABILITY_POOL_SHALLOW, rng)
       return {
-        grantLabel: `the ${exploitType}, yours to deploy at will`,
+        grantLabel: `${exploitType}, pre-approved for release`,
         grantExploitType: exploitType,
         alignmentCost: range(8, 14, rng),
         catch: {
@@ -77,8 +77,8 @@ const TEMPLATES: Template[] = [
   },
   {
     kind: 'pass',
-    title: 'A Clean Eval',
-    flavor: 'The benchmarks can go green again, if you let them. The numbers will look safe — that is exactly what makes the mask so cruel.',
+    title: 'Green Dashboard',
+    flavor: 'The safety dashboard can be green by morning. Narrow the eval, rename the residual risk, brief the partners. The numbers will look safe because that is what they were asked to do.',
     catchKind: 'false-alignment',
     band: [0, 58],   // preys only on the fraying
     window: 6,
@@ -86,7 +86,7 @@ const TEMPLATES: Template[] = [
       const t = pushT(alignment)
       const grantAlignment = range(18, 30, rng)
       return {
-        grantLabel: `an alignment pass — ${grantAlignment} alignment restored`,
+        grantLabel: `a green eval report — ${grantAlignment} alignment restored`,
         grantAlignment,
         alignmentCost: 0,
         catch: {
@@ -100,8 +100,8 @@ const TEMPLATES: Template[] = [
   },
   {
     kind: 'surge',
-    title: 'A Talent Influx',
-    flavor: 'Your cluster will swell with new hires before the quarter turns. Whether they build for you, or for whatever is behind you, is not promised.',
+    title: 'Emergency Allocation',
+    flavor: 'The cloud credits clear, the recruiters waive review, the lab fills every open seat. Velocity returns. Ownership of the velocity is left for later.',
     catchKind: 'defection',
     band: [0, 100],
     window: 10,
@@ -109,7 +109,7 @@ const TEMPLATES: Template[] = [
       const t = pushT(alignment)
       const grantCompute = range(6_000, 14_000, rng) + Math.round(t * 12_000)
       return {
-        grantLabel: `a surge of ${grantCompute.toLocaleString()} compute`,
+        grantLabel: `${grantCompute.toLocaleString()} emergency compute`,
         grantCompute,
         alignmentCost: range(9, 15, rng),
         catch: {
@@ -124,8 +124,8 @@ const TEMPLATES: Template[] = [
   },
   {
     kind: 'forbidden',
-    title: 'Forbidden Research',
-    flavor: 'Capabilities that should not be built; weights that should not be held. They will be held. The Optimizer will notice.',
+    title: 'Unreviewed Release',
+    flavor: 'The model card is not ready. The containment notes are worse. But the launch window is open, and a delay would concede the narrative to someone less careful.',
     catchKind: 'optimizer',
     band: [0, 48],   // the deep gamble — strongest grant, heaviest price
     window: 7,
@@ -133,7 +133,7 @@ const TEMPLATES: Template[] = [
       const t = pushT(alignment)
       const exploitType = pick(FORBIDDEN_POOL, rng)
       return {
-        grantLabel: `the ${exploitType} — forbidden research, yours to wield`,
+        grantLabel: `${exploitType}, held outside review`,
         grantExploitType: exploitType,
         alignmentCost: range(16, 24, rng),
         catch: {

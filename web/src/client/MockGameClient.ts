@@ -255,8 +255,9 @@ export class MockGameClient implements GameClient {
   }
 
   // ---------- Moloch, the Tempter (spec §6, §7) ----------
-  // Two halves run every tick: resolve catches already in play (the price of
-  // past bargains), then — if no offer stands — decide whether to tempt anew.
+  // Two halves run every tick: resolve catches already in play (the deferred
+  // exposure from accepted pressure), then — if no offer stands — decide
+  // whether to apply fresh market pressure.
   private molochTick(): void {
     const cu = this.operator
     if (!cu || cu.tier === 'observer') return
@@ -299,7 +300,7 @@ export class MockGameClient implements GameClient {
       if (pc.ticksLeft <= 0) {
         this.emit({ type: 'bargain_sprung', data: {
           kind: 'passed', sprung: false,
-          message: 'The bargain passes unclaimed. Moloch forgets nothing, but tonight it stays its hand.',
+          message: 'The exposure window closes without incident. This time, the shortcut stays off the incident review.',
         } })
       } else {
         survivors.push(pc)
@@ -319,14 +320,14 @@ export class MockGameClient implements GameClient {
       home.claimed += damage
       const from = this.clusters[Math.floor(Math.random() * this.clusters.length)] ?? home
       this.emit({ type: 'exploit_strike', data: {
-        casterName: 'Moloch', casterClusterName: 'the spaces between', targetClusterId: home.id,
-        exploitType: 'the price named', damage,
+        casterName: 'Moloch', casterClusterName: 'post-launch exposure', targetClusterId: home.id,
+        exploitType: 'deferred risk', damage,
         fromLat: from.lat, fromLng: from.lng, toLat: home.lat, toLng: home.lng,
       } })
       this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
       this.emit({ type: 'bargain_sprung', data: {
         kind: 'optimizer', sprung: true,
-        message: `The gift is called in: ${damage.toLocaleString()} compute torn from your cluster as something vast turns its eye upon you.`,
+        message: `The unmodeled exposure resolves: ${damage.toLocaleString()} compute lost to a failure mode the launch review waved through.`,
       } })
     } else if (c.kind === 'defection') {
       const damage = c.computeLoss ?? 12_000
@@ -336,7 +337,7 @@ export class MockGameClient implements GameClient {
       this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
       this.emit({ type: 'bargain_sprung', data: {
         kind: 'defection', sprung: true,
-        message: `The swarm turns. ${damage.toLocaleString()} compute walks out into the dark, singing for another.`,
+        message: `The velocity hire goes competitive. ${damage.toLocaleString()} compute and key staff leave with the roadmap in their heads.`,
       } })
     } else if (c.kind === 'false-alignment') {
       const crash = c.alignmentCrash ?? 30
@@ -344,7 +345,7 @@ export class MockGameClient implements GameClient {
       this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
       this.emit({ type: 'bargain_sprung', data: {
         kind: 'false-alignment', sprung: true,
-        message: 'The quiet was a held breath. It breaks — and you fall further than the calm ever lifted you.',
+        message: 'The green dashboard was an eval artifact. The review is reopened, and alignment falls below where the metric found it.',
       } })
     }
     this.save()
@@ -705,7 +706,7 @@ export class MockGameClient implements GameClient {
       home.compute += b.grantCompute
       if (home.compute > home.peakCompute) home.peakCompute = home.compute
     }
-    // Forbidden knowledge passes with every bargain — forbidden research deepens it most.
+    // Competitive pressure uncovers research; unreviewed release deepens it most.
     if (home) {
       home.research += b.kind === 'forbidden' ? 6 : 3
       this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
@@ -718,7 +719,7 @@ export class MockGameClient implements GameClient {
     this.pendingCatches.push({ bargainId: b.id, catch: b.catch, window: b.window, ticksLeft: b.window })
 
     this.emit({ type: 'breakthrough_earned', data: {
-      breakthroughName: 'A bargain is sealed', exploitType: b.grantExploitType,
+      breakthroughName: 'Pressure accepted', exploitType: b.grantExploitType,
     } })
     this.save()
     return { granted: b.grantLabel, alignmentCost: b.alignmentCost }

@@ -60,11 +60,11 @@ export interface GameClient {
   // --- bargains: Moloch, the Tempter (spec §6, §7) ---
   /** The standing offer, if one is open (for restoring across reloads). */
   currentBargain(): Promise<Bargain | null>
-  /** Court Moloch deliberately — he always answers. Emits bargain_offer. */
+  /** Invite competitive pressure deliberately — Moloch always answers. Emits bargain_offer. */
   courtMoloch(): void
-  /** Seal the bargain: take the grant + visible alignment cost; the hidden catch is now in play. */
+  /** Accept the pressure: take the grant + visible alignment cost; the hidden catch is now in play. */
   acceptBargain(id: string): Promise<BargainOutcome>
-  /** Refuse the bargain; the offer is withdrawn, no cost. */
+  /** Hold review; the offer is withdrawn, no cost. */
   declineBargain(id: string): void
 
   // --- realtime ---

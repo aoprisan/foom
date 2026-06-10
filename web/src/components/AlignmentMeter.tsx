@@ -94,7 +94,7 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
               style={{ flex: 1, ...( { '--key': 'var(--gold)' } as React.CSSProperties) }}
             >
               Court Moloch
-              <span className="key-hint">open a bargain</span>
+              <span className="key-hint">invite pressure</span>
             </button>
           </div>
 

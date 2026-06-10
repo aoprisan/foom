@@ -199,7 +199,7 @@ export default function App() {
 
   const onBargainOffer = useCallback((b: Bargain) => {
     setBargain(b)
-    addToast('A bargain is offered. Moloch awaits your answer.', 'bargain')
+    addToast('The race tightens. Moloch has found a pressure point.', 'bargain')
   }, [addToast])
 
   const onBargainSprung = useCallback((s: BargainSprung) => {
@@ -262,7 +262,7 @@ export default function App() {
 
   const handleEvaluation = useCallback(() => game.alignmentPass(), [])
   const handleCourt = useCallback(() => {
-    addToast('You speak into the dark, and the dark leans closer…', 'bargain')
+    addToast('You ask what the market would reward. Moloch answers in a roadmap.', 'bargain')
     game.courtMoloch()
   }, [addToast])
 
@@ -270,10 +270,10 @@ export default function App() {
     setBargain(null)
     try {
       const { granted } = await game.acceptBargain(id)
-      addToast(`The bargain is sealed — you take ${granted}. Something of you is now owed.`, 'bargain')
+      addToast(`Pressure accepted — ${granted}. The residual risk moves off the slide.`, 'bargain')
       setExploitRefreshKey(k => k + 1)
     } catch (e) {
-      addToast(`The bargain slips away: ${e instanceof Error ? e.message : 'unknown'}`, 'bargain')
+      addToast(`The window closes: ${e instanceof Error ? e.message : 'unknown'}`, 'bargain')
     }
   }, [addToast])
 
