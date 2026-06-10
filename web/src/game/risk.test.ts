@@ -3,6 +3,7 @@ import {
   capabilityDividend, trainGain, dividendDamage,
   rogueIncidentChance, rollRogueIncident, incidentRiskLabel,
   INCIDENT_THRESHOLD, INCIDENT_MAX_CHANCE, INCIDENT_MIN_LOSS, DIVIDEND_BANDS,
+  ALIGNMENT_STATES,
 } from './risk'
 
 // A deterministic RNG, mirroring bargains.test.ts.
@@ -37,8 +38,14 @@ describe('capabilityDividend (spec §7: low alignment unlocks higher multipliers
   })
 
   it('keeps its bands aligned with the meter’s etched floors', () => {
-    // The gauge etches 55 / 30 / 12; the dividend must turn at exactly those lines.
-    expect(DIVIDEND_BANDS.map(b => b.floor)).toEqual([55, 30, 12, -1])
+    // The gauge etches the named-state floors; the dividend must turn at exactly those lines.
+    const floors = ALIGNMENT_STATES.map(s => s.floor)
+    expect(DIVIDEND_BANDS.slice(0, 3).map(b => b.floor)).toEqual(floors.slice(1, 4))
+    expect(DIVIDEND_BANDS[3].floor).toBeLessThan(0)   // the Rogue band catches everything
+  })
+
+  it('caps the incident chance even for out-of-range alignment', () => {
+    expect(rogueIncidentChance(-50)).toBe(INCIDENT_MAX_CHANCE)
   })
 })
 

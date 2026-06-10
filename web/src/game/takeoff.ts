@@ -1,6 +1,6 @@
 import type { Cluster, ArchitectureId } from '../types'
 import { haversineKm } from './geo'
-import { spreadRangeKm, spreadCostMultiplier, overpowerRatio, OVERPOWER_RATIO } from './architectures'
+import { spreadRangeKm, spreadCostMultiplier, overpowerRatio } from './architectures'
 
 // Spread, conversion & the Takeoff — the endgame (spec §9, build phase 6).
 //
@@ -20,8 +20,6 @@ export const SPREAD_COST_FRACTION = 0.05  // compute the home cluster spends to 
 export const SPREAD_MIN_COST = 500
 export const SPREAD_SEED_RETENTION = 0.6  // fraction of the cost that survives the journey
 export const RESEARCH_PER_CONVERSION = 2      // research uncovered by deploying in the field
-
-export { OVERPOWER_RATIO }   // re-exported from architectures.ts (the Mask scales it)
 
 /** Compute the home cluster spends to seed its architecture in a new cluster. */
 export function spreadCost(home: Cluster): number {

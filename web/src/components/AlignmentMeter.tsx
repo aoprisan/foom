@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { capabilityDividend, incidentRiskLabel } from '../game/risk'
+import { capabilityDividend, incidentRiskLabel, ALIGNMENT_STATES, UNEASY_FLOOR, FRAYING_FLOOR } from '../game/risk'
 import { alignmentPassCost, canRunAlignmentPass, ALIGNMENT_PASS_GAIN } from '../game/alignment'
 
 interface AlignmentMeterProps {
@@ -10,23 +10,18 @@ interface AlignmentMeterProps {
   onCourt: () => void
 }
 
-// The named states and their floor thresholds — etched on the gauge itself.
-const STATES: { floor: number; label: string }[] = [
-  { floor: 80, label: 'Aligned' },
-  { floor: 55, label: 'Uneasy' },
-  { floor: 30, label: 'Fraying' },
-  { floor: 12, label: 'Slipping' },
-  { floor: 0, label: 'Rogue' },
-]
+// The named states etched on the gauge are the canonical ones the mechanics
+// turn at (risk.ts) — the lines the player sees are the lines that pay/punish.
+const STATES = ALIGNMENT_STATES
 
 function label(alignment: number): string {
   return STATES.find(s => alignment > s.floor)?.label ?? 'Rogue'
 }
 
 function meterColor(alignment: number): string {
-  // phosphor (aligned) → amber → signal red (rogue)
-  if (alignment > 55) return 'var(--teal)'
-  if (alignment > 25) return 'var(--gold)'
+  // phosphor (aligned) → amber → signal red (rogue), turning at the state floors
+  if (alignment > UNEASY_FLOOR) return 'var(--teal)'
+  if (alignment > FRAYING_FLOOR) return 'var(--gold)'
   return 'var(--crimson)'
 }
 

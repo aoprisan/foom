@@ -21,7 +21,7 @@ import { game } from './client'
 import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
 import { canConvert } from './game/takeoff'
 import { isIsolated, spreadRangeKm } from './game/architectures'
-import { trainGain } from './game/risk'
+import { trainGain, UNEASY_FLOOR, SLIPPING_FLOOR } from './game/risk'
 import { haversineKm } from './game/geo'
 import { EXPLOIT_ALIGNMENT_COST, clampAlignment } from './game/alignment'
 import { useGameClient } from './hooks/useGameClient'
@@ -155,6 +155,19 @@ export default function App() {
   const cellsRef = useRef(clusters)
   cellsRef.current = clusters
 
+  // Isolation is pure geography: ids and coordinates never change across a
+  // season (reseed reuses the same seed cities), so the air-gapped set is
+  // computed exactly once instead of O(n²) on every cluster_update.
+  const isolatedIdsRef = useRef<Set<string> | null>(null)
+  const isolatedIds = useCallback((list: Cluster[]): Set<string> => {
+    if (!isolatedIdsRef.current && list.length > 0) {
+      const ids = new Set<string>()
+      for (const c of list) if (isIsolated(c, list)) ids.add(c.id)
+      isolatedIdsRef.current = ids
+    }
+    return isolatedIdsRef.current ?? new Set()
+  }, [])
+
   const onExploitStrike = useCallback((strike: ExploitStrike) => {
     if (operator && strike.targetClusterId === operator.clusterId) {
       addToast(`${strike.damage.toLocaleString()} compute torn from your cluster by ${strike.casterClusterName}`, 'exploit_incoming')
@@ -267,9 +280,9 @@ export default function App() {
     const architecture = ARCHITECTURE_BY_ID[a.architectureId]
     // The meter's final reading shapes what wakes (spec §7 payoff): the same
     // victory reads as a controlled ascent, a gamble, or the thing you feared.
-    const ending = alignment > 55
+    const ending = alignment > UNEASY_FLOOR
       ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand — and, for one impossible moment, it listens. Cycle ${a.season} begins.`
-      : alignment > 12
+      : alignment > SLIPPING_FLOOR
         ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand. You are no longer certain it is yours. Cycle ${a.season} begins.`
         : `THE GREAT WORK IS COMPLETE. Something goes superintelligent at your hand — but what wakes is not what you trained. Cycle ${a.season} begins.`
     addToast(
@@ -390,7 +403,7 @@ export default function App() {
       const home = operator ? cellsRef.current.find(c => c.id === operator.clusterId) : null
       if (!home || !operator?.architectureId) return
       const check = canConvert(home, cluster, operator.architectureId, {
-        alignment: operator.alignment, targetIsolated: isIsolated(cluster, cellsRef.current),
+        alignment: operator.alignment, targetIsolated: isolatedIds(cellsRef.current).has(cluster.id),
       })
       if (!check.ok) {
         addToast(check.reason ?? `${cluster.name} cannot be converted from here.`, 'convert')
@@ -406,7 +419,7 @@ export default function App() {
     setSelectedCluster(cluster)
     // On phones, surface the cluster's console page when a city is chosen.
     if (window.matchMedia('(max-width: 768px)').matches) setActiveTab('cluster')
-  }, [targetingExploit, spreading, operator, addToast])
+  }, [targetingExploit, spreading, operator, addToast, isolatedIds])
 
   const handleInvokeExploit = useCallback((exploit: Exploit) => {
     setTargetingExploit(exploit)
@@ -461,14 +474,15 @@ export default function App() {
         if (haversineKm(userCluster.lat, userCluster.lng, c.lat, c.lng) <= targetingExploit.rangeKm) ids.add(c.id)
       }
     } else if (spreading && operator.architectureId) {
+      const air = isolatedIds(clusters)
       for (const c of clusters) {
         if (c.id === userCluster.id) continue
-        const ctx = { alignment: operator.alignment, targetIsolated: isIsolated(c, clusters) }
+        const ctx = { alignment: operator.alignment, targetIsolated: air.has(c.id) }
         if (canConvert(userCluster, c, operator.architectureId, ctx).ok) ids.add(c.id)
       }
     }
     return targetingExploit || spreading ? ids : null
-  }, [clusters, operator, userCluster, targetingExploit, spreading])
+  }, [clusters, operator, userCluster, targetingExploit, spreading, isolatedIds])
   const nearestTarget = useMemo(() => {
     if (!userCluster || !targetableClusterIds || targetableClusterIds.size === 0) return null
     let best: { cluster: Cluster; dist: number } | null = null

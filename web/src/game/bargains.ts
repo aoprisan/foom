@@ -1,4 +1,5 @@
 import type { Bargain, BargainKind, BargainCatchKind, CatchBand } from '../types'
+import { misalignment01 } from './alignment'
 
 // Moloch's bargains — the race to the bottom (spec §6, §7).
 //
@@ -19,10 +20,8 @@ import type { Bargain, BargainKind, BargainCatchKind, CatchBand } from '../types
 
 type Rng = () => number
 
-/** 0 while fully aligned, 1 at the brink — how far capability has been pushed. */
-function pushT(alignment: number): number {
-  return Math.max(0, Math.min(1, (100 - alignment) / 100))
-}
+/** How far capability has been pushed — the shared misalignment curve (alignment.ts). */
+const pushT = misalignment01
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t

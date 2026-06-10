@@ -101,6 +101,13 @@ export function replicatorUpkeep(homeCompute: number): number {
   )
 }
 
+// ---- the world's bots run the same physics ----
+
+/** How fast a bot cluster of this architecture accrues compute in the world tick. */
+export function botGrowthMultiplier(architecture: ArchitectureId | null): number {
+  return architecture === 'replicator' ? 1.6 : architecture === 'shoggoth' ? 1.2 : 1
+}
+
 // ---- spread modifiers, consumed by takeoff.ts canConvert ----
 
 export const BASE_SPREAD_RANGE_KM = 2_500

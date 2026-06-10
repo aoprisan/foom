@@ -18,6 +18,7 @@ import {
 import { trainGain, dividendDamage, rogueIncidentChance, rollRogueIncident } from '../game/risk'
 import {
   shoggothIdleRate, shoggothOfflineYield, replicatorUpkeep, isIsolated, spreadRangeKm,
+  botGrowthMultiplier,
 } from '../game/architectures'
 import { haversineKm } from '../game/geo'
 
@@ -190,8 +191,7 @@ export class MockGameClient implements GameClient {
     for (let i = 0; i < growers; i++) {
       const c = this.clusters[Math.floor(Math.random() * this.clusters.length)]
       if (!c || c.id === this.operator?.clusterId) continue
-      const architectureMul = c.architectureId === 'replicator' ? 1.6 : c.architectureId === 'shoggoth' ? 1.2 : 1
-      const gain = Math.round((20 + Math.random() * 220) * architectureMul)
+      const gain = Math.round((20 + Math.random() * 220) * botGrowthMultiplier(c.architectureId))
       c.compute += gain
       if (c.compute > c.peakCompute) c.peakCompute = c.compute
       this.emit({ type: 'cluster_update', data: clusterUpdate(c) })

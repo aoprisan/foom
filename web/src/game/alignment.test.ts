@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   TRAIN_ALIGNMENT_DELTA, EXPLOIT_ALIGNMENT_COST, CONVERT_ALIGNMENT_COST,
   ALIGNMENT_PASS_GAIN, ALIGNMENT_PASS_MIN_COST, ALIGNMENT_PASS_COST_FRACTION,
-  alignmentPassCost, canRunAlignmentPass, clampAlignment,
+  alignmentPassCost, canRunAlignmentPass, clampAlignment, misalignment01,
 } from './alignment'
 
 describe('the alignment economy (spec §7: a gamble, not a timer to optimise)', () => {
@@ -48,5 +48,15 @@ describe('clampAlignment', () => {
     expect(clampAlignment(-5)).toBe(0)
     expect(clampAlignment(105)).toBe(100)
     expect(clampAlignment(42)).toBe(42)
+  })
+})
+
+describe('misalignment01 (the shared push curve behind bargains and incidents)', () => {
+  it('runs 0 at fully aligned to 1 at the brink, clamped beyond', () => {
+    expect(misalignment01(100)).toBe(0)
+    expect(misalignment01(50)).toBe(0.5)
+    expect(misalignment01(0)).toBe(1)
+    expect(misalignment01(120)).toBe(0)
+    expect(misalignment01(-10)).toBe(1)
   })
 })

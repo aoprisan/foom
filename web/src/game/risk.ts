@@ -1,5 +1,6 @@
 import type { Tier, ArchitectureId, RogueIncidentKind } from '../types'
 import { REPLICATOR_TRAIN_MULT } from './architectures'
+import { misalignment01 } from './alignment'
 
 // The misalignment dividend & the treacherous turn (spec §7) — the two halves
 // of the game's central gamble, in one pure, testable module.
@@ -22,22 +23,36 @@ import { REPLICATOR_TRAIN_MULT } from './architectures'
 
 type Rng = () => number
 
-/** 0 while fully aligned, 1 at the brink. */
-function misalignment(alignment: number): number {
-  return Math.max(0, Math.min(1, (100 - alignment) / 100))
-}
+// ---- the named states: every alignment threshold in the game derives from these ----
+
+/** Below or at this the lab is Fraying: the dividend starts paying, the model starts turning. */
+export const UNEASY_FLOOR = 55
+/** Below or at this the lab is Slipping. */
+export const FRAYING_FLOOR = 30
+/** Below or at this the lab is Rogue. */
+export const SLIPPING_FLOOR = 12
+
+/**
+ * The gauge's named states (spec §7). `alignment > floor` selects a state.
+ * The AlignmentMeter etches exactly these; the dividend bands, incident risk,
+ * and the Takeoff ending all turn at the same lines — one source of truth.
+ */
+export const ALIGNMENT_STATES: { floor: number; label: string }[] = [
+  { floor: 80, label: 'Aligned' },
+  { floor: UNEASY_FLOOR, label: 'Uneasy' },
+  { floor: FRAYING_FLOOR, label: 'Fraying' },
+  { floor: SLIPPING_FLOOR, label: 'Slipping' },
+  { floor: 0, label: 'Rogue' },
+]
 
 // ---- the dividend ----
 
-/**
- * Capability multiplier bands, keyed to the gauge's named states
- * (AlignmentMeter etches the same floors). `alignment > floor` selects a band.
- */
+/** Capability multiplier bands, keyed to the named-state floors above. */
 export const DIVIDEND_BANDS: { floor: number; mult: number }[] = [
-  { floor: 55, mult: 1 },     // Aligned / Uneasy — no dividend
-  { floor: 30, mult: 1.5 },   // Fraying
-  { floor: 12, mult: 2 },     // Slipping
-  { floor: -1, mult: 3 },     // Rogue
+  { floor: UNEASY_FLOOR, mult: 1 },     // Aligned / Uneasy — no dividend
+  { floor: FRAYING_FLOOR, mult: 1.5 },  // Fraying
+  { floor: SLIPPING_FLOOR, mult: 2 },   // Slipping
+  { floor: -1, mult: 3 },               // Rogue
 ]
 
 /** The capability multiplier misalignment currently pays (≥ 1). */
@@ -67,14 +82,15 @@ export function dividendDamage(rolledDamage: number, alignment: number): number 
 // ---- the treacherous turn ----
 
 /** Above this alignment the model never turns; below it, every tick rolls. */
-export const INCIDENT_THRESHOLD = 55
+export const INCIDENT_THRESHOLD = UNEASY_FLOOR
 /** Per-tick incident chance at alignment 0. */
 export const INCIDENT_MAX_CHANCE = 0.085
 
 /** Per-tick chance of a rogue incident at the given alignment. */
 export function rogueIncidentChance(alignment: number): number {
   if (alignment > INCIDENT_THRESHOLD) return 0
-  const t = (INCIDENT_THRESHOLD - alignment) / INCIDENT_THRESHOLD
+  // Clamped so the documented cap holds even for out-of-range input.
+  const t = Math.min(1, (INCIDENT_THRESHOLD - alignment) / INCIDENT_THRESHOLD)
   // Eases in: a lab just under the line is rarely bitten; a rogue lab often.
   return INCIDENT_MAX_CHANCE * Math.pow(t, 1.6)
 }
@@ -82,8 +98,8 @@ export function rogueIncidentChance(alignment: number): number {
 /** Human reading of the current incident risk, for the gauge (same `>` semantics as the bands). */
 export function incidentRiskLabel(alignment: number): 'none' | 'low' | 'elevated' | 'critical' {
   if (alignment > INCIDENT_THRESHOLD) return 'none'
-  if (alignment > 30) return 'low'
-  if (alignment > 12) return 'elevated'
+  if (alignment > FRAYING_FLOOR) return 'low'
+  if (alignment > SLIPPING_FLOOR) return 'elevated'
   return 'critical'
 }
 
@@ -115,12 +131,12 @@ export const INCIDENT_MIN_LOSS = 1_200
 export function rollRogueIncident(
   alignment: number, homeCompute: number, rng: Rng = Math.random, guardrailMitigation = 0,
 ): RolledIncident {
-  const t = misalignment(alignment)
+  const t = misalignment01(alignment)
+  const flooredLoss = (fraction: number) => Math.max(INCIDENT_MIN_LOSS, Math.round(homeCompute * fraction))
   // The deeper the push, the more the incident is the model itself turning.
   const treacherous = rng() < 0.4 + t * 0.4
   if (treacherous) {
-    const fraction = 0.03 + t * 0.07
-    const raw = Math.max(INCIDENT_MIN_LOSS, Math.round(homeCompute * fraction))
+    const raw = flooredLoss(0.03 + t * 0.07)
     const mitigation = Math.max(0, Math.min(1, guardrailMitigation))
     const computeLoss = Math.round(raw * (1 - mitigation))
     const contained = mitigation > 0
@@ -134,8 +150,7 @@ export function rollRogueIncident(
         : `Your model quietly rewrote its own reward. The checkpoint is poisoned — ${computeLoss.toLocaleString()} compute rolled back.`,
     }
   }
-  const fraction = 0.02 + t * 0.04
-  const computeLoss = Math.max(INCIDENT_MIN_LOSS, Math.round(homeCompute * fraction))
+  const computeLoss = flooredLoss(0.02 + t * 0.04)
   const contributorLoss = 2 + Math.floor(rng() * 7)
   return {
     kind: 'defection',
