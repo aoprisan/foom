@@ -6,15 +6,19 @@ import type {
 import { GameClient, EventBus, ConnectionState, InvokeResult } from './GameClient'
 import { SEED_CLUSTERS } from '../game/seedClusters'
 import { ARCHITECTURES, EXPLOIT_BY_TYPE, EXPLOIT_THRESHOLDS, BREAKTHROUGH_EXPLOIT_POOL } from '../game/catalog'
-import { rollBargain, perTickSpringChance } from '../game/bargains'
+import { rollBargain, perTickSpringChance, probeCost, catchBand } from '../game/bargains'
 import {
   canConvert, greatWorkScore, worldConvergence,
-  SPREAD_RANGE_KM, SPREAD_SEED_RETENTION, RESEARCH_PER_CONVERSION,
+  SPREAD_SEED_RETENTION, RESEARCH_PER_CONVERSION,
 } from '../game/takeoff'
 import {
   EXPLOIT_ALIGNMENT_COST, CONVERT_ALIGNMENT_COST, GUARDRAIL_ALIGNMENT_GAIN,
   ALIGNMENT_PASS_GAIN, alignmentPassCost, clampAlignment,
 } from '../game/alignment'
+import { trainGain, dividendDamage, rogueIncidentChance, rollRogueIncident } from '../game/risk'
+import {
+  shoggothIdleRate, shoggothOfflineYield, replicatorUpkeep, isIsolated, spreadRangeKm,
+} from '../game/architectures'
 import { haversineKm } from '../game/geo'
 
 const SAVE_KEY = 'foom.save.v1'
@@ -47,6 +51,7 @@ interface SaveState {
   bargain?: Bargain | null
   pendingCatches?: PendingCatch[]
   season?: number
+  savedAt?: number          // when the save was written — drives the Shoggoth's overnight run
 }
 
 function uid(): string {
@@ -102,6 +107,7 @@ export class MockGameClient implements GameClient {
   private wasConverged = false
   private timer: ReturnType<typeof setInterval> | null = null
   private savePending = false
+  private pendingIdleYield = 0   // the Shoggoth's overnight run, announced on the first tick
 
   constructor() {
     const loaded = this.load()
@@ -114,6 +120,19 @@ export class MockGameClient implements GameClient {
     this.bargain = loaded?.bargain ?? null
     this.pendingCatches = loaded?.pendingCatches ?? []
     this.season = loaded?.season ?? 1
+
+    // The Shoggoth trains overnight (spec §6 boon): compute accrued while the
+    // operator was away lands on the home cluster, announced on the first tick.
+    if (this.operator?.architectureId === 'shoggoth' && loaded?.savedAt) {
+      const home = this.cluster(this.operator.clusterId)
+      const yieldCompute = shoggothOfflineYield(this.operator.totalSteps, Date.now() - loaded.savedAt, TICK_MS)
+      if (home && yieldCompute > 0) {
+        home.compute += yieldCompute
+        if (home.compute > home.peakCompute) home.peakCompute = home.compute
+        this.pendingIdleYield = yieldCompute
+      }
+    }
+
     this.startTicking()
   }
 
@@ -133,7 +152,7 @@ export class MockGameClient implements GameClient {
       try {
         const state: SaveState = {
           clusters: this.clusters, operator: this.operator, exploits: this.exploits, subscription: this.subscriptionRec,
-          bargain: this.bargain, pendingCatches: this.pendingCatches, season: this.season,
+          bargain: this.bargain, pendingCatches: this.pendingCatches, season: this.season, savedAt: Date.now(),
         }
         localStorage.setItem(SAVE_KEY, JSON.stringify(state))
       } catch { /* quota / private mode — best effort */ }
@@ -153,6 +172,19 @@ export class MockGameClient implements GameClient {
   }
 
   private tick(): void {
+    // Announce the Shoggoth's overnight run once the UI is listening.
+    if (this.pendingIdleYield > 0) {
+      const home = this.operator ? this.cluster(this.operator.clusterId) : undefined
+      if (home) {
+        this.emit({ type: 'idle_yield', data: { compute: this.pendingIdleYield, clusterName: home.name } })
+        this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+      }
+      this.pendingIdleYield = 0
+    }
+
+    this.architectureMetabolism()
+    this.rogueIncidentTick()
+
     // Bot clusters accrue compute (architecture-flavored), so the planet feels alive.
     const growers = 6 + Math.floor(Math.random() * 6)
     for (let i = 0; i < growers; i++) {
@@ -356,6 +388,59 @@ export class MockGameClient implements GameClient {
     this.save()
   }
 
+  // ---------- architecture metabolism (spec §6: boons/drawbacks as mechanics) ----------
+  // The Shoggoth's idle trickle and the Replicator's upkeep, applied to the
+  // operator's home cluster each tick. The pure rates live in architectures.ts.
+  private architectureMetabolism(): void {
+    const cu = this.operator
+    if (!cu || cu.tier === 'observer') return
+    const home = this.cluster(cu.clusterId)
+    if (!home) return
+
+    if (cu.architectureId === 'shoggoth') {
+      const trickle = shoggothIdleRate(cu.totalSteps)
+      if (trickle > 0) {
+        home.compute += trickle
+        if (home.compute > home.peakCompute) home.peakCompute = home.compute
+        this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+      }
+    } else if (cu.architectureId === 'replicator') {
+      const upkeep = replicatorUpkeep(home.compute)
+      if (upkeep > 0) {
+        home.compute = Math.max(0, home.compute - upkeep)
+        this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+      }
+    }
+  }
+
+  // ---------- rogue incidents: the treacherous turn (spec §7) ----------
+  // Below the Uneasy line the model itself becomes the hazard: each tick rolls
+  // a chance (risk.ts) of a real strike on the operator's own cluster. These
+  // land among the hallucinated phantoms — by design indistinguishable until
+  // the compute is gone.
+  private rogueIncidentTick(): void {
+    const cu = this.operator
+    if (!cu || cu.tier === 'observer') return
+    const chance = rogueIncidentChance(cu.alignment)
+    if (chance <= 0 || Math.random() >= chance) return
+    const home = this.cluster(cu.clusterId)
+    if (!home) return
+
+    const incident = rollRogueIncident(cu.alignment, home.compute)
+    home.compute = Math.max(0, home.compute - incident.computeLoss)
+    home.claimed += incident.computeLoss
+    if (incident.contributorLoss > 0) {
+      home.contributorCount = Math.max(1, home.contributorCount - incident.contributorLoss)
+    }
+    this.emit({ type: 'rogue_incident', data: {
+      kind: incident.kind, clusterId: home.id, computeLoss: incident.computeLoss,
+      contributorLoss: incident.contributorLoss, message: incident.message,
+      toLat: home.lat, toLng: home.lng,
+    } })
+    this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+    this.save()
+  }
+
   // ---------- GameClient: reads ----------
   async listClusters(): Promise<Cluster[]> { return this.clusters.map(c => ({ ...c })) }
 
@@ -416,7 +501,9 @@ export class MockGameClient implements GameClient {
     if (!cu || cu.tier === 'observer') return
     const home = this.cluster(cu.clusterId)
     if (!home) return
-    const mult = cu.tier === 'labDirector' ? 2 : 1
+    // Tier × architecture × the misalignment dividend (risk.ts): a slipping lab
+    // trains faster — that is the temptation (spec §7).
+    const mult = trainGain(cu.tier, cu.architectureId, cu.alignment)
 
     home.compute += mult
     if (home.compute > home.peakCompute) home.peakCompute = home.compute
@@ -446,8 +533,9 @@ export class MockGameClient implements GameClient {
     if (dist > exploit.rangeKm) throw new Error(`target beyond the exploit’s deployment reach (${Math.round(dist)}km > ${exploit.rangeKm}km)`)
 
     // Damage is training progress destroyed at the target; its users migrate to
-    // the caster when the rival's model fails publicly (spec §8).
-    const damage = randInt(exploit.damageLower, exploit.damageUpper)
+    // the caster when the rival's model fails publicly (spec §8). The roll is
+    // scaled by the misalignment dividend — forbidden capability hits harder (spec §7).
+    const damage = dividendDamage(randInt(exploit.damageLower, exploit.damageUpper), cu.alignment)
     to.compute = Math.max(0, to.compute - damage)
     to.claimed += damage
     cu.usersCaptured += damage
@@ -574,7 +662,7 @@ export class MockGameClient implements GameClient {
       if (!c || c.id === src.id || c.id === this.operator?.clusterId) continue
       if (c.architectureId === src.architectureId) continue
       if (c.architectureId !== null && c.compute >= src.compute) continue
-      if (haversineKm(src.lat, src.lng, c.lat, c.lng) > SPREAD_RANGE_KM) continue
+      if (haversineKm(src.lat, src.lng, c.lat, c.lng) > spreadRangeKm(src.architectureId)) continue
       return c
     }
     return undefined
@@ -587,7 +675,9 @@ export class MockGameClient implements GameClient {
     const target = this.cluster(targetClusterId)
     if (!home || !target) throw new Error('unknown cluster')
 
-    const check = canConvert(home, target, cu.architectureId)
+    const check = canConvert(home, target, cu.architectureId, {
+      alignment: cu.alignment, targetIsolated: isIsolated(target, this.clusters),
+    })
     if (!check.ok) throw new Error(check.reason ?? 'cannot spread there')
     const cost = check.cost ?? 0
 
@@ -737,6 +827,26 @@ export class MockGameClient implements GameClient {
       this.bargain = null
       this.save()
     }
+  }
+
+  // An interpretability probe spends home compute to read the standing offer's
+  // hidden catch as a coarse band (spec §7) — paid sight into the gamble. The
+  // offer's countdown keeps running while the probe is read: knowing costs time too.
+  async probeBargain(id: string): Promise<Bargain> {
+    const cu = this.operator
+    if (!cu) throw new Error('not an operator')
+    const b = this.bargain
+    if (!b || b.id !== id) throw new Error('that offer has passed')
+    if (b.revealedBand) return { ...b }
+    const home = this.cluster(cu.clusterId)
+    if (!home) throw new Error('no home cluster')
+    const cost = probeCost(home.compute)
+    if (home.compute < cost) throw new Error('too little compute to run the probe')
+    home.compute -= cost
+    b.revealedBand = catchBand(b.catch.chance)
+    this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+    this.save()
+    return { ...b }
   }
 
   // ---------- realtime ----------

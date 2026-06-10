@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { rollBargain, perTickSpringChance } from './bargains'
+import { rollBargain, perTickSpringChance, probeCost, catchBand, PROBE_MIN_COST, PROBE_COST_FRACTION } from './bargains'
 
 // A deterministic RNG so the gamble's structure can be asserted exactly.
 function seq(values: number[]): () => number {
@@ -43,6 +43,30 @@ describe('rollBargain', () => {
     // The catch carries a chance in (0,1) — the hidden half of the trade.
     expect(b.catch.chance).toBeGreaterThan(0)
     expect(b.catch.chance).toBeLessThan(1)
+  })
+})
+
+describe('interpretability probes (spec §7: paid sight into the catch)', () => {
+  it('charges a cost that scales with the cluster, never below the floor', () => {
+    expect(probeCost(0)).toBe(PROBE_MIN_COST)
+    const big = 1_000_000
+    expect(probeCost(big)).toBe(Math.round(big * PROBE_COST_FRACTION))
+    expect(probeCost(big)).toBeGreaterThan(PROBE_MIN_COST)
+  })
+
+  it('coarsens the chance into a lossy band — a reading, not the weights', () => {
+    expect(catchBand(0.18)).toBe('unlikely')
+    expect(catchBand(0.42)).toBe('coin-flip')
+    expect(catchBand(0.55)).toBe('likely')
+    expect(catchBand(0.7)).toBe('near-certain')
+  })
+
+  it('covers every chance a template can roll', () => {
+    // Template chances span ~0.18..0.7 (bargains.ts); the band function must
+    // answer for the whole [0,1] interval regardless.
+    for (let c = 0; c <= 1; c += 0.01) {
+      expect(['unlikely', 'coin-flip', 'likely', 'near-certain']).toContain(catchBand(c))
+    }
   })
 })
 

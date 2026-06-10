@@ -19,7 +19,9 @@ import StoryPanel from './components/StoryPanel'
 import PwaPrompts from './components/PwaPrompts'
 import { game } from './client'
 import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
-import { canConvert, SPREAD_RANGE_KM } from './game/takeoff'
+import { canConvert } from './game/takeoff'
+import { isIsolated, spreadRangeKm } from './game/architectures'
+import { trainGain } from './game/risk'
 import { haversineKm } from './game/geo'
 import { EXPLOIT_ALIGNMENT_COST, clampAlignment } from './game/alignment'
 import { useGameClient } from './hooks/useGameClient'
@@ -27,7 +29,7 @@ import { useTrainHandler } from './hooks/useTrainHandler'
 import type {
   Cluster, Operator, ClusterUpdate, ExploitStrike, ChurnStrike,
   BreakthroughEarned, WorldStats, Exploit, Bargain, BargainSprung,
-  ClusterConverted, TakeoffState, TakeoffTriggered,
+  ClusterConverted, TakeoffState, TakeoffTriggered, RogueIncident, IdleYield,
 } from './types'
 
 const LEADERBOARD_REFRESH_MS = 3000
@@ -208,6 +210,19 @@ export default function App() {
 
   useEffect(() => () => clearTimeout(hallucinateTimer.current), [])
 
+  // A rogue incident is the real thing the hallucinations imitate: the player's
+  // own model striking its own cluster. Toast + pulse, and the message carries
+  // the loss — unlike a phantom, the compute is actually gone.
+  const onRogueIncident = useCallback((i: RogueIncident) => {
+    addToast(i.message, 'exploit_incoming')
+    setPulsingClusterId(i.clusterId)
+    setTimeout(() => setPulsingClusterId(null), 1500)
+  }, [addToast])
+
+  const onIdleYield = useCallback((y: IdleYield) => {
+    addToast(`The Shoggoth trained while you were away — +${y.compute.toLocaleString()} compute at ${y.clusterName}.`, 'breakthrough')
+  }, [addToast])
+
   const onBargainOffer = useCallback((b: Bargain) => {
     setBargain(b)
     addToast('The race tightens. Moloch has found a pressure point.', 'bargain')
@@ -268,6 +283,7 @@ export default function App() {
 
   const { connectionState } = useGameClient({
     onClusterUpdate, onOperatorUpdate, onExploitStrike, onExploitIncoming, onChurn, onBreakthrough, onAlignment,
+    onRogueIncident, onIdleYield,
     onBargainOffer, onBargainSprung, onClusterConverted, onTakeoffProgress, onTakeoffTriggered,
   })
 
@@ -293,11 +309,23 @@ export default function App() {
     game.declineBargain(id)
   }, [])
 
+  // Interpretability probe: pay compute, read the catch's odds. The updated
+  // bargain (with its revealed band) replaces the standing card in place.
+  const handleProbeBargain = useCallback(async (id: string) => {
+    try {
+      const probed = await game.probeBargain(id)
+      setBargain(probed)
+      addToast(`Interpretability probe complete — the catch reads ${probed.revealedBand}.`, 'bargain')
+    } catch (e) {
+      addToast(`The probe fails: ${e instanceof Error ? e.message : 'unknown'}`, 'bargain')
+    }
+  }, [addToast])
+
   const { handleTrain, personalSteps, rateLimited, multiplier, reconcile } = useTrainHandler(
     operator,
     () => {
       if (operator) {
-        const mult = tier === 'labDirector' ? 2 : 1
+        const mult = trainGain(operator.tier, operator.architectureId, operator.alignment)
         setClusters(prev => prev.map(c => c.id === operator.clusterId ? { ...c, compute: c.compute + mult } : c))
       }
     },
@@ -354,7 +382,9 @@ export default function App() {
     if (spreading) {
       const home = operator ? cellsRef.current.find(c => c.id === operator.clusterId) : null
       if (!home || !operator?.architectureId) return
-      const check = canConvert(home, cluster, operator.architectureId)
+      const check = canConvert(home, cluster, operator.architectureId, {
+        alignment: operator.alignment, targetIsolated: isIsolated(cluster, cellsRef.current),
+      })
       if (!check.ok) {
         addToast(check.reason ?? `${cluster.name} cannot be converted from here.`, 'convert')
         return
@@ -426,7 +456,8 @@ export default function App() {
     } else if (spreading && operator.architectureId) {
       for (const c of clusters) {
         if (c.id === userCluster.id) continue
-        if (canConvert(userCluster, c, operator.architectureId).ok) ids.add(c.id)
+        const ctx = { alignment: operator.alignment, targetIsolated: isIsolated(c, clusters) }
+        if (canConvert(userCluster, c, operator.architectureId, ctx).ok) ids.add(c.id)
       }
     }
     return targetingExploit || spreading ? ids : null
@@ -491,7 +522,7 @@ export default function App() {
   const operatorPanelEl = operator && (
     <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} />
   )
-  const exploitPanelEl = <ExploitPanel tier={tier} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
+  const exploitPanelEl = <ExploitPanel tier={tier} alignment={alignment} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
   const pactPanelEl = showSubscriptionPanel ? <SubscriptionPanel tier={tier} onUpgradeed={handleUpgradeed} /> : null
   const alignmentPanelEl = operator && (
     <AlignmentMeter alignment={alignment} hallucinating={hallucinating} onEvaluation={handleEvaluation} onCourt={handleCourt} />
@@ -706,7 +737,7 @@ export default function App() {
           '--feed': 'var(--teal)',
         } as React.CSSProperties}>
           <span className="feed-glyph" aria-hidden>◈</span>
-          <span style={{ letterSpacing: 0.5 }}>SPREADING · within {SPREAD_RANGE_KM}km — choose a cluster</span>
+          <span style={{ letterSpacing: 0.5 }}>SPREADING · within {spreadRangeKm(operator?.architectureId ?? null)}km — choose a cluster</span>
           <button
             onClick={() => setSpreading(false)}
             className="console-key console-key--ghost"
@@ -720,8 +751,10 @@ export default function App() {
       {bargain && operator && (
         <MolochCard
           bargain={bargain}
+          homeCompute={userCluster?.compute ?? 0}
           onAccept={handleAcceptBargain}
           onDecline={handleDeclineBargain}
+          onProbe={handleProbeBargain}
         />
       )}
     </>

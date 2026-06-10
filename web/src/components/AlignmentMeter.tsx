@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { capabilityDividend, incidentRiskLabel } from '../game/risk'
 
 interface AlignmentMeterProps {
   alignment: number
@@ -31,6 +32,9 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
   const [open, setOpen] = useState(true)
   const pct = Math.max(0, Math.min(100, alignment))
   const color = meterColor(alignment)
+  const dividend = capabilityDividend(alignment)
+  const risk = incidentRiskLabel(alignment)
+  const riskColor = risk === 'none' ? 'var(--text-faint)' : risk === 'low' ? 'var(--gold)' : 'var(--crimson)'
 
   return (
     <div className="panel alignment-panel">
@@ -83,6 +87,20 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
             ))}
           </div>
 
+          {/* The two halves of the gamble, read directly off the meter: what
+              misalignment pays right now, and what it risks per tick. */}
+          <div className="mono" style={{
+            display: 'flex', justifyContent: 'space-between', marginTop: 8,
+            fontSize: 10, letterSpacing: 0.5,
+          }}>
+            <span style={{ color: dividend > 1 ? 'var(--gold-bright)' : 'var(--text-faint)' }}>
+              capability dividend ×{dividend}
+            </span>
+            <span style={{ color: riskColor }}>
+              incident risk: {risk}
+            </span>
+          </div>
+
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button onClick={onEvaluation} className="console-key" style={{ flex: 1 }}>
               Alignment Pass
@@ -99,9 +117,9 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
           </div>
 
           <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 8, lineHeight: 1.4 }}>
-            Capability costs alignment; an alignment pass buys it back with the same GPUs the
-            capability run wanted. Low alignment unlocks the strongest exploits — and lets
-            phantom strikes surface that were never there.
+            Misalignment pays: training and exploits scale up to ×3 as the meter falls. It also
+            turns: below the Uneasy line your own model starts striking your cluster — and phantom
+            strikes surface among the real ones that were never there at all.
           </div>
         </>
       )}

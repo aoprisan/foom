@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Bargain } from '../types'
+import { probeCost } from '../game/bargains'
 
 interface MolochCardProps {
   bargain: Bargain
+  homeCompute: number
   onAccept: (id: string) => void
   onDecline: (id: string) => void
+  onProbe: (id: string) => void
 }
 
 // Seconds the offer stands before Moloch withdraws it (auto-declines).
@@ -16,10 +19,14 @@ const STAND_SECONDS = 14
  * downstream exposure is unmodeled. That asymmetry is the gamble. Refusing
  * costs nothing; letting the countdown lapse refuses for you.
  *
+ * One counter-tool exists: an interpretability probe spends home compute to
+ * read the catch's odds as a coarse band — and the countdown keeps running
+ * while you read. Knowing costs compute and time; that is the safety tax.
+ *
  * Moloch is sacral gold — the prize, the race to the bottom — not the Churn's
  * cold violet. The card burns like an offer plate held over the fire.
  */
-export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardProps) {
+export default function MolochCard({ bargain, homeCompute, onAccept, onDecline, onProbe }: MolochCardProps) {
   const [left, setLeft] = useState(STAND_SECONDS)
   const declined = useRef(false)
 
@@ -75,7 +82,11 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
           value={bargain.alignmentCost > 0 ? `${bargain.alignmentCost} alignment, now` : 'no immediate alignment cost'}
           color="var(--gold)"
         />
-        <Row label="Exposure" value="unmodeled, downstream" color="var(--crimson)" />
+        <Row
+          label="Exposure"
+          value={bargain.revealedBand ? `${bargain.revealedBand} — probe reading` : 'unmodeled, downstream'}
+          color={bargain.revealedBand ? 'var(--teal)' : 'var(--crimson)'}
+        />
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
@@ -90,6 +101,17 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
           Hold review
         </button>
       </div>
+
+      {!bargain.revealedBand && (
+        <button
+          onClick={() => { if (!declined.current) onProbe(bargain.id) }}
+          className="console-key console-key--ghost"
+          style={{ width: '100%', marginTop: 8, padding: '7px 0', fontSize: 10 }}
+          title="Spend compute to surface the hidden catch's odds. The countdown keeps running."
+        >
+          Interpretability probe · −{probeCost(homeCompute).toLocaleString()} compute
+        </button>
+      )}
 
       <div className="gauge" style={{ marginTop: 12, height: 4, '--gauge': 'var(--gold)' } as React.CSSProperties}>
         <div className="gauge__fill" style={{ width: `${(left / STAND_SECONDS) * 100}%`, transition: 'width 1s linear' }} />

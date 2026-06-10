@@ -42,11 +42,37 @@ describe('canConvert', () => {
     expect(canConvert(home, weak, 'shoggoth').ok).toBe(true)      // 100k > 40k * 1.5
   })
 
-  it('lets The Mask turn even a strong rival (the deceptive alignment boon)', () => {
+  it('lets The Mask turn a strong rival only as its alignment fails (spec §6: fragile while well-aligned)', () => {
     const home = cluster({ id: 'h', compute: 100_000 })
     const strong = cluster({ id: 't', lat: 0, lng: 1, compute: 90_000, architectureId: 'prometheus' })
-    expect(canConvert(home, strong, 'shoggoth').ok).toBe(false)
-    expect(canConvert(home, strong, 'mask').ok).toBe(true)
+    // Honest force cannot flip it at any alignment.
+    expect(canConvert(home, strong, 'shoggoth', { alignment: 0 }).ok).toBe(false)
+    // A well-aligned Mask has nothing to hide behind (needs 1.2× = 108k)…
+    expect(canConvert(home, strong, 'mask', { alignment: 100 }).ok).toBe(false)
+    // …but as alignment fails the deception finds purchase (at 40: needs 0.48× = 43.2k).
+    expect(canConvert(home, strong, 'mask', { alignment: 40 }).ok).toBe(true)
+    // At the brink, the treacherous turn flips anyone.
+    expect(canConvert(home, strong, 'mask', { alignment: 0 }).ok).toBe(true)
+  })
+
+  it('extends Prometheus’ reach beyond the baseline buildout (spec §6: the fire spreads)', () => {
+    const home = cluster({ id: 'h', lat: 0, lng: 0 })
+    const far = cluster({ id: 't', lat: 0, lng: 30, architectureId: null })   // ~3,340km away
+    expect(canConvert(home, far, 'shoggoth').ok).toBe(false)                  // beyond 2,500km
+    expect(canConvert(home, far, 'prometheus').ok).toBe(true)                 // within 4,000km
+  })
+
+  it('charges Prometheus dearly into air-gapped regions (spec §6 drawback)', () => {
+    const home = cluster({ id: 'h', compute: 100_000 })
+    const target = cluster({ id: 't', lat: 0, lng: 1, architectureId: null })
+    const networked = canConvert(home, target, 'prometheus', { targetIsolated: false })
+    const isolated = canConvert(home, target, 'prometheus', { targetIsolated: true })
+    expect(networked.ok).toBe(true)
+    expect(isolated.ok).toBe(true)
+    expect(isolated.cost!).toBeGreaterThan(networked.cost! * 2)
+    // Other architectures pay the same either way.
+    expect(canConvert(home, target, 'shoggoth', { targetIsolated: true }).cost)
+      .toBe(canConvert(home, target, 'shoggoth', { targetIsolated: false }).cost)
   })
 
   it('refuses when compute is too thin to seed a cluster', () => {
