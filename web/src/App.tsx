@@ -328,7 +328,21 @@ export default function App() {
     if (targetingExploit) {
       const home = operator ? cellsRef.current.find(c => c.id === operator.clusterId) : null
       const dist = home ? haversineKm(home.lat, home.lng, cluster.lat, cluster.lng) : Infinity
-      if (!home || cluster.id === home.id || dist > targetingExploit.rangeKm) {
+      if (!home) return
+      if (cluster.id === home.id) {
+        const nearest = cellsRef.current
+          .filter(c => c.id !== home.id && haversineKm(home.lat, home.lng, c.lat, c.lng) <= targetingExploit.rangeKm)
+          .sort((a, b) => haversineKm(home.lat, home.lng, a.lat, a.lng) - haversineKm(home.lat, home.lng, b.lat, b.lng))[0]
+        if (nearest) {
+          addToast(`Nearest valid target selected: ${nearest.name}. Bind the prompt to release ${targetingExploit.exploitType}.`, 'exploit')
+          setPendingCast({ exploit: targetingExploit, cluster: nearest })
+          setTargetingExploit(null)
+        } else {
+          addToast(`No valid target within this exploit's ${rangeLabel(targetingExploit.rangeKm)} reach.`, 'exploit')
+        }
+        return
+      }
+      if (dist > targetingExploit.rangeKm) {
         addToast(`Target rejected — ${cluster.name} is outside this exploit's ${rangeLabel(targetingExploit.rangeKm)} reach.`, 'exploit')
         return
       }
