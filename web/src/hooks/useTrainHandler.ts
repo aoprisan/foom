@@ -15,7 +15,6 @@ export function useTrainHandler(
   onOptimisticTrain: () => void,
 ) {
   const [pendingSteps, setPendingSteps] = useState(0)
-  const serverStepsRef = useRef(0)
   const trainTimestamps = useRef<number[]>([])
 
   const [rateLimited, setRateLimited] = useState(false)
@@ -23,6 +22,10 @@ export function useTrainHandler(
   useEffect(() => () => clearTimeout(rateLimitTimer.current), [])
 
   const multiplier = operator?.tier === 'labDirector' ? 2 : 1
+
+  useEffect(() => {
+    setPendingSteps(0)
+  }, [operator?.id, operator?.totalSteps])
 
   const handleTrain = useCallback(() => {
     if (!operator || operator.tier === 'observer') return
@@ -43,16 +46,12 @@ export function useTrainHandler(
     game.train()
   }, [operator, onOptimisticTrain, multiplier])
 
-  // Called when the world confirms our home cluster's compute via cluster_update.
-  const reconcile = useCallback((serverTotal: number) => {
-    const prevServer = serverStepsRef.current
-    serverStepsRef.current = serverTotal
-    if (prevServer === 0) return
-    const confirmed = serverTotal - prevServer
-    setPendingSteps(prev => Math.max(0, prev - confirmed))
-  }, [])
+  // Personal compute is confirmed by operator_update. Cluster compute is a shared
+  // world value and can move because of bots, exploits, or the Churn, so it must
+  // never be used as the player's personal total.
+  const reconcile = useCallback((_serverTotal: number) => {}, [])
 
-  const personalSteps = (serverStepsRef.current || (operator?.totalSteps ?? 0)) + pendingSteps
+  const personalSteps = (operator?.totalSteps ?? 0) + pendingSteps
 
   return { handleTrain, personalSteps, pendingSteps, rateLimited, multiplier, reconcile }
 }

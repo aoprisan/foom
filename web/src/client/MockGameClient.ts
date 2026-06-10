@@ -265,6 +265,11 @@ export class MockGameClient implements GameClient {
     this.resolveCatches()
 
     if (this.offerCooldown > 0) this.offerCooldown -= 1
+    // Let the first session breathe: unbidden pressure begins only after the
+    // lab has actually traded safety for speed, or after the player has trained
+    // long enough to understand the loop. The Court Moloch button still answers
+    // immediately when the player deliberately asks.
+    if (cu.alignment >= 100 && cu.usersCaptured === 0 && cu.totalSteps < 150) return
     // A slipping lab is courted far more often than an aligned one (spec §6).
     const t = Math.max(0, Math.min(1, (100 - cu.alignment) / 100))
     const offerChance = 0.03 + t * 0.22
@@ -424,6 +429,7 @@ export class MockGameClient implements GameClient {
     this.checkBreakthroughs(cu)
     this.checkExploitProgression(cu)
     this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
+    this.emit({ type: 'operator_update', data: { ...cu } })
     this.save()
   }
 
@@ -754,8 +760,8 @@ export class MockGameClient implements GameClient {
 
   private checkBreakthroughs(cu: Operator): void {
     const milestones: { at: number; name: string }[] = [
-      { at: 200, name: 'First Loss Curve' },
-      { at: 1000, name: 'Grokking' },
+      { at: 35, name: 'First Loss Curve' },
+      { at: 150, name: 'Grokking' },
     ]
     for (const m of milestones) {
       if (cu.totalSteps >= m.at && cu.lastBreakthroughThreshold < m.at) {
@@ -765,12 +771,12 @@ export class MockGameClient implements GameClient {
         this.emit({ type: 'breakthrough_earned', data: { breakthroughName: m.name, exploitType } })
       }
     }
-    // "Scaling Law" every 5,000 steps beyond the fixed milestones.
-    if (cu.totalSteps >= 5000) {
-      const step = Math.floor(cu.totalSteps / 5000) * 5000
+    // "Scaling Law" every 1,000 steps beyond the fixed milestones.
+    if (cu.totalSteps >= 1000) {
+      const step = Math.floor(cu.totalSteps / 1000) * 1000
       if (cu.lastBreakthroughThreshold < step) {
         cu.lastBreakthroughThreshold = step
-        const exploitType = BREAKTHROUGH_EXPLOIT_POOL[(step / 5000) % BREAKTHROUGH_EXPLOIT_POOL.length]
+        const exploitType = BREAKTHROUGH_EXPLOIT_POOL[(step / 1000) % BREAKTHROUGH_EXPLOIT_POOL.length]
         this.grantExploit(cu, exploitType, 'breakthrough')
         this.emit({ type: 'breakthrough_earned', data: { breakthroughName: 'Scaling Law', exploitType } })
       }

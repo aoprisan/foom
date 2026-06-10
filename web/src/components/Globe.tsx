@@ -14,12 +14,17 @@ interface GlobeProps {
   selectedClusterId: string | null
   pulsingClusterId: string | null
   churnStrike?: { lat: number; lng: number; key: number } | null  // the Churn falls here
+  targetableClusterIds?: Set<string> | null
+  targeting?: boolean
   paused?: boolean   // stop auto-rotation (e.g. while aiming a exploit)
 }
 
 interface Beam { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; born: number }
 
-export default function Globe({ clusters, userClusterId, onClusterClick, selectedClusterId, pulsingClusterId, churnStrike, paused }: GlobeProps) {
+export default function Globe({
+  clusters, userClusterId, onClusterClick, selectedClusterId, pulsingClusterId,
+  churnStrike, targetableClusterIds, targeting, paused,
+}: GlobeProps) {
   const globeRef = useRef<any>(null)
   const [polygons, setPolygons] = useState<any[]>([])
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight })
@@ -223,17 +228,22 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
 
   const pointColor = useCallback((d: any) => {
     const cluster = d as Cluster
+    if (targeting && targetableClusterIds) {
+      if (cluster.id === userClusterId) return '#ffd28a'
+      return targetableClusterIds.has(cluster.id) ? '#d9ff8a' : 'rgba(126, 145, 158, 0.22)'
+    }
     if (cluster.id === userClusterId) return '#ffd28a'       // amber — yours
     if (cluster.id === selectedClusterId) return '#eef4f8'   // white-hot — selected
     return cluster.compute > 0 ? '#b4f04ecc' : '#b4f04e3a'   // phosphor — the rest
-  }, [userClusterId, selectedClusterId])
+  }, [targeting, targetableClusterIds, userClusterId, selectedClusterId])
 
   const pointRadius = useCallback((d: any) => {
     const cluster = d as Cluster
+    if (targeting && targetableClusterIds?.has(cluster.id)) return 0.58
     if (cluster.id === userClusterId) return 0.4 + Math.min(0.4, 0.4 * Math.log10(Math.max(1, clusters.find(c => c.id === userClusterId)?.compute ?? 1)) / Math.log10(Math.max(10, maxCompute)))
     if (cluster.compute > 0) return 0.15 + Math.min(0.35, 0.35 * Math.log10(cluster.compute) / Math.log10(Math.max(10, maxCompute)))
     return 0.12
-  }, [userClusterId, maxCompute, clusters])
+  }, [targeting, targetableClusterIds, userClusterId, maxCompute, clusters])
 
   const handlePointClick = useCallback((point: any) => {
     const cluster = point as Cluster
@@ -245,11 +255,14 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
 
   const pointLabel = useCallback((d: any) => {
     const cluster = d as Cluster
+    const targetStatus = targeting && targetableClusterIds
+      ? `<br/><span style="color: ${targetableClusterIds.has(cluster.id) ? '#d9ff8a' : '#7e919e'};">${targetableClusterIds.has(cluster.id) ? 'valid target' : 'out of reach'}</span>`
+      : ''
     return `<div style="font-family: 'Chivo Mono', monospace; font-size: 12px; color: #eef4f8; text-align: center;">
       <b>${cluster.name}</b>, ${cluster.country}<br/>
-      <span style="color: #ffd28a;">${cluster.compute.toLocaleString()} compute</span>
+      <span style="color: #ffd28a;">${cluster.compute.toLocaleString()} compute</span>${targetStatus}
     </div>`
-  }, [])
+  }, [targeting, targetableClusterIds])
 
   const cellsRef = useRef(clusters)
   cellsRef.current = clusters

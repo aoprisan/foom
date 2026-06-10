@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { game, ConnectionState } from '../client'
 import type {
   ClusterUpdate, ClusterTrain, ExploitStrike, ChurnStrike, BreakthroughEarned, AlignmentUpdate,
-  Bargain, BargainSprung, ClusterConverted, TakeoffProgress, TakeoffTriggered,
+  Bargain, BargainSprung, ClusterConverted, TakeoffProgress, TakeoffTriggered, Operator,
 } from '../types'
 
 export type { ConnectionState }
 
 export interface GameClientHandlers {
   onClusterUpdate?: (u: ClusterUpdate) => void
+  onOperatorUpdate?: (o: Operator) => void
   onClusterTrain?: (c: ClusterTrain) => void
   onExploitStrike?: (s: ExploitStrike) => void
   onExploitIncoming?: (s: ExploitStrike) => void
@@ -37,6 +38,7 @@ export function useGameClient(handlers: GameClientHandlers) {
       const h = ref.current
       switch (e.type) {
         case 'cluster_update': h.onClusterUpdate?.(e.data); break
+        case 'operator_update': h.onOperatorUpdate?.(e.data); break
         case 'cluster_train': h.onClusterTrain?.(e.data); break
         case 'exploit_strike': h.onExploitStrike?.(e.data); break
         case 'exploit_incoming': h.onExploitIncoming?.(e.data); break

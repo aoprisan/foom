@@ -263,6 +263,7 @@ export interface GreatWorkResult {
 
 export type GameEvent =
   | { type: 'cluster_update'; data: ClusterUpdate }
+  | { type: 'operator_update'; data: Operator }
   | { type: 'cluster_train'; data: ClusterTrain }
   | { type: 'exploit_strike'; data: ExploitStrike }
   | { type: 'exploit_incoming'; data: ExploitStrike }

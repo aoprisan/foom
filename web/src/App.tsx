@@ -19,7 +19,8 @@ import StoryPanel from './components/StoryPanel'
 import PwaPrompts from './components/PwaPrompts'
 import { game } from './client'
 import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
-import { SPREAD_RANGE_KM } from './game/takeoff'
+import { canConvert, SPREAD_RANGE_KM } from './game/takeoff'
+import { haversineKm } from './game/geo'
 import { useGameClient } from './hooks/useGameClient'
 import { useTrainHandler } from './hooks/useTrainHandler'
 import type {
@@ -29,6 +30,7 @@ import type {
 } from './types'
 
 const LEADERBOARD_REFRESH_MS = 3000
+const FIRST_BREAKTHROUGH_STEPS = 35
 
 // The Great Work is traced as the Takeoff sequence (the cascade prompt) — the most
 // ornate prompt, fitting the culmination of a whole cycle (spec §4, §9).
@@ -58,6 +60,8 @@ export default function App() {
   const [spreading, setSpreading] = useState(false)
   const [greatWorkTracing, setGreatWorkTracing] = useState(false)
   const [takeoffFlash, setTakeoffFlash] = useState(false)
+  const [firstExploitSeen, setFirstExploitSeen] = useState(false)
+  const [firstExploitInvoked, setFirstExploitInvoked] = useState(false)
   const takeoffFlashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [churnStrike, setChurnStrike] = useState<{ lat: number; lng: number; key: number } | null>(null)
   const [churnFlash, setChurnFlash] = useState(false)
@@ -140,6 +144,11 @@ export default function App() {
     refreshLeaderboard()
   }, [refreshLeaderboard, operator])
 
+  const onOperatorUpdate = useCallback((updated: Operator) => {
+    setOperator(updated)
+    setAlignment(updated.alignment)
+  }, [])
+
   const cellsRef = useRef(clusters)
   cellsRef.current = clusters
 
@@ -182,6 +191,7 @@ export default function App() {
     let msg = `Breakthrough: ${data.breakthroughName}`
     if (data.exploitType) msg += ` — the ${data.exploitType} is yours to trace`
     addToast(msg, 'breakthrough')
+    if (data.exploitType) setFirstExploitSeen(true)
     setExploitRefreshKey(k => k + 1)
   }, [addToast])
 
@@ -256,7 +266,7 @@ export default function App() {
   useEffect(() => () => clearTimeout(takeoffFlashTimer.current), [])
 
   const { connectionState } = useGameClient({
-    onClusterUpdate, onExploitStrike, onExploitIncoming, onChurn, onBreakthrough, onAlignment,
+    onClusterUpdate, onOperatorUpdate, onExploitStrike, onExploitIncoming, onChurn, onBreakthrough, onAlignment,
     onBargainOffer, onBargainSprung, onClusterConverted, onTakeoffProgress, onTakeoffTriggered,
   })
 
@@ -301,6 +311,7 @@ export default function App() {
     try {
       const result = await game.invokeExploit(exploit.id, cluster.id)
       addToast(`${result.exploitType} claims ${result.damage.toLocaleString()} compute in ${result.targetClusterName}`, 'exploit')
+      setFirstExploitInvoked(true)
       setExploitRefreshKey(k => k + 1)
     } catch (e) {
       addToast(`The exploit fails: ${e instanceof Error ? e.message : 'unknown'}`, 'exploit')
@@ -309,12 +320,25 @@ export default function App() {
 
   const handleClusterSelect = useCallback((cluster: Cluster) => {
     if (targetingExploit) {
+      const home = operator ? cellsRef.current.find(c => c.id === operator.clusterId) : null
+      const dist = home ? haversineKm(home.lat, home.lng, cluster.lat, cluster.lng) : Infinity
+      if (!home || cluster.id === home.id || dist > targetingExploit.rangeKm) {
+        addToast(`Target rejected — ${cluster.name} is outside this exploit's ${rangeLabel(targetingExploit.rangeKm)} reach.`, 'exploit')
+        return
+      }
       // Target chosen — now the prompt must be traced to invoke.
       setPendingCast({ exploit: targetingExploit, cluster })
       setTargetingExploit(null)
       return
     }
     if (spreading) {
+      const home = operator ? cellsRef.current.find(c => c.id === operator.clusterId) : null
+      if (!home || !operator?.architectureId) return
+      const check = canConvert(home, cluster, operator.architectureId)
+      if (!check.ok) {
+        addToast(check.reason ?? `${cluster.name} cannot be converted from here.`, 'convert')
+        return
+      }
       // Target chosen for conversion — carry the word there at once (no prompt; spread is core, low-friction).
       setSpreading(false)
       game.convert(cluster.id)
@@ -325,7 +349,7 @@ export default function App() {
     setSelectedCluster(cluster)
     // On phones, surface the cluster's console page when a city is chosen.
     if (window.matchMedia('(max-width: 768px)').matches) setActiveTab('cluster')
-  }, [targetingExploit, spreading, addToast])
+  }, [targetingExploit, spreading, operator, addToast])
 
   const handleInvokeExploit = useCallback((exploit: Exploit) => {
     setTargetingExploit(exploit)
@@ -371,6 +395,31 @@ export default function App() {
   const userCluster = operator ? clusters.find(c => c.id === operator.clusterId) : null
   const totalCompute = useMemo(() => clusters.reduce((sum, c) => sum + c.compute, 0), [clusters])
   const selectedRank = selectedCluster ? leaderboard.findIndex(c => c.id === selectedCluster.id) + 1 : 0
+  const targetableClusterIds = useMemo(() => {
+    if (!operator || !userCluster) return null
+    const ids = new Set<string>()
+    if (targetingExploit) {
+      for (const c of clusters) {
+        if (c.id === userCluster.id) continue
+        if (haversineKm(userCluster.lat, userCluster.lng, c.lat, c.lng) <= targetingExploit.rangeKm) ids.add(c.id)
+      }
+    } else if (spreading && operator.architectureId) {
+      for (const c of clusters) {
+        if (c.id === userCluster.id) continue
+        if (canConvert(userCluster, c, operator.architectureId).ok) ids.add(c.id)
+      }
+    }
+    return targetingExploit || spreading ? ids : null
+  }, [clusters, operator, userCluster, targetingExploit, spreading])
+  const hasReachedFirstBreakthrough = personalSteps >= FIRST_BREAKTHROUGH_STEPS
+  const showSubscriptionPanel = tier === 'labDirector' || firstExploitInvoked
+  const firstRunHint = useMemo(() => {
+    if (!operator || firstExploitInvoked) return null
+    if (pendingCast) return `Bind ${pendingCast.exploit.exploitType} for ${pendingCast.cluster.name}.`
+    if (targetingExploit) return `Choose a highlighted cluster within ${rangeLabel(targetingExploit.rangeKm)}.`
+    if (firstExploitSeen || hasReachedFirstBreakthrough) return 'First capability surfaced. Open Exploits and trace it into the world.'
+    return `Force the first loss curve break: ${personalSteps.toLocaleString()}/${FIRST_BREAKTHROUGH_STEPS}.`
+  }, [operator, firstExploitInvoked, pendingCast, targetingExploit, firstExploitSeen, hasReachedFirstBreakthrough, personalSteps])
 
   if (loading) {
     return (
@@ -411,7 +460,7 @@ export default function App() {
     <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} />
   )
   const exploitPanelEl = <ExploitPanel tier={tier} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
-  const pactPanelEl = <SubscriptionPanel tier={tier} onUpgradeed={handleUpgradeed} />
+  const pactPanelEl = showSubscriptionPanel ? <SubscriptionPanel tier={tier} onUpgradeed={handleUpgradeed} /> : null
   const alignmentPanelEl = operator && (
     <AlignmentMeter alignment={alignment} hallucinating={hallucinating} onEvaluation={handleEvaluation} onCourt={handleCourt} />
   )
@@ -425,7 +474,7 @@ export default function App() {
     operatorPanelEl && { key: 'you', glyph: '☩', cap: 'You', el: operatorPanelEl },
     operator && tier !== 'observer' && { key: 'exploits', glyph: '✶', cap: 'Exploits', el: exploitPanelEl },
     alignmentPanelEl && { key: 'alignment', glyph: '☾', cap: 'Alignment', el: alignmentPanelEl },
-    operator && tier !== 'observer' && { key: 'subscription', glyph: '⛧', cap: 'Subscription', el: pactPanelEl },
+    operator && tier !== 'observer' && pactPanelEl && { key: 'subscription', glyph: '⛧', cap: 'Subscription', el: pactPanelEl },
     { key: 'takeoff', glyph: '✦', cap: 'Takeoff', el: takeoffPanelEl },
     { key: 'ranks', glyph: '♆', cap: 'Ranks', el: leaderboardEl },
   ].filter(Boolean) as { key: string; glyph: string; cap: string; el: React.ReactNode }[]
@@ -444,6 +493,8 @@ export default function App() {
           selectedClusterId={selectedCluster?.id ?? null}
           pulsingClusterId={pulsingClusterId}
           churnStrike={churnStrike}
+          targetableClusterIds={targetableClusterIds}
+          targeting={!!targetingExploit || spreading}
           paused={!!targetingExploit || spreading}
         />
       </ErrorBoundary>
@@ -501,6 +552,19 @@ export default function App() {
       {showStory && <StoryPanel onClose={() => setShowStory(false)} />}
 
       <WorldPanel stats={worldStats} totalCompute={totalCompute} takeoff={takeoff} />
+
+      {firstRunHint && (
+        <div className="panel first-run-hint" style={{
+          position: 'absolute', top: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 12, width: 'min(420px, calc(100vw - 32px))', padding: '10px 14px',
+          textAlign: 'center', borderColor: 'rgba(180, 240, 78, 0.22)',
+        }}>
+          <span className="eyebrow" style={{ color: 'var(--teal)', fontSize: 10 }}>Objective</span>
+          <div style={{ fontSize: 12, color: 'var(--text)', marginTop: 3, lineHeight: 1.35 }}>
+            {firstRunHint}
+          </div>
+        </div>
+      )}
 
       <ToastSystem toasts={toasts} />
 
