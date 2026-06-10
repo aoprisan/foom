@@ -8,8 +8,8 @@ import type { ExploitFamily } from '../../types'
 // Guide polylines in a unit box (0..1). Used both as $P templates and as the
 // fading ghost-guide drawn for novices.
 export const PROMPT_GUIDES: Record<ExploitFamily, [number, number][]> = {
-  // Injection — a simple descending V (a one-line query).
-  injection: [[0.1, 0.15], [0.5, 0.9], [0.9, 0.15]],
+  // Injection — one clean stroke (a single query entering the system).
+  injection: [[0.18, 0.78], [0.82, 0.22]],
   // Release — a closed triangle (a deployed payload takes shape).
   release: [[0.5, 0.1], [0.9, 0.85], [0.1, 0.85], [0.5, 0.1]],
   // Cascade — a five-pointed star in one continuous path (a runaway cascade).

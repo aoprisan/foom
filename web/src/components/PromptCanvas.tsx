@@ -30,7 +30,8 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
   const graph = PROMPT_GRAPHS[exploit.family]
   const totalEdges = graph.edges.length
   const uses = Number(localStorage.getItem(guideUsesKey(exploit.family)) ?? 0)
-  const guideOpacity = Math.max(0, (GUIDE_FADE_USES - uses) / GUIDE_FADE_USES) * 0.45
+  const assisted = uses === 0 && exploit.family === 'injection' && exploit.tier === 1
+  const guideOpacity = assisted ? 0.72 : Math.max(0, (GUIDE_FADE_USES - uses) / GUIDE_FADE_USES) * 0.45
 
   const nodePx = useCallback((i: number) => ({
     x: graph.nodes[i].x * SIZE, y: graph.nodes[i].y * SIZE,
@@ -232,7 +233,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
           <button onClick={clear} style={btnGhost} disabled={boundCount === 0}>Clear</button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-dim)', maxWidth: SIZE, textAlign: 'center' }}>
-          Drag point to point to bind the prompt — {boundCount}/{totalEdges} bound. It completes itself.
+          {assisted ? 'Drag once between the two lit nodes — the first query completes itself.' : `Drag point to point to bind the prompt — ${boundCount}/${totalEdges} bound. It completes itself.`}
         </div>
       </div>
     </div>

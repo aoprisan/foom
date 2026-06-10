@@ -473,6 +473,7 @@ export class MockGameClient implements GameClient {
     this.emit({ type: 'cluster_update', data: clusterUpdate(from) })
     this.emit({ type: 'cluster_update', data: clusterUpdate(to) })
     this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
+    this.emit({ type: 'operator_update', data: { ...cu } })
     this.save()
     return { damage, exploitType: exploit.exploitType, targetClusterName: to.name }
   }

@@ -21,6 +21,7 @@ import { game } from './client'
 import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
 import { canConvert, SPREAD_RANGE_KM } from './game/takeoff'
 import { haversineKm } from './game/geo'
+import { EXPLOIT_ALIGNMENT_COST, clampAlignment } from './game/alignment'
 import { useGameClient } from './hooks/useGameClient'
 import { useTrainHandler } from './hooks/useTrainHandler'
 import type {
@@ -309,14 +310,19 @@ export default function App() {
     const { exploit, cluster } = pendingCast
     setPendingCast(null)
     try {
+      const beforeAlignment = operator?.alignment ?? alignment
       const result = await game.invokeExploit(exploit.id, cluster.id)
-      addToast(`${result.exploitType} claims ${result.damage.toLocaleString()} compute in ${result.targetClusterName}`, 'exploit')
+      const afterAlignment = clampAlignment(beforeAlignment - EXPLOIT_ALIGNMENT_COST[exploit.tier])
+      addToast(
+        `${result.exploitType} hit ${result.targetClusterName}: -${result.damage.toLocaleString()} compute · Alignment ${Math.round(beforeAlignment)} → ${Math.round(afterAlignment)}`,
+        'exploit',
+      )
       setFirstExploitInvoked(true)
       setExploitRefreshKey(k => k + 1)
     } catch (e) {
       addToast(`The exploit fails: ${e instanceof Error ? e.message : 'unknown'}`, 'exploit')
     }
-  }, [pendingCast, addToast])
+  }, [pendingCast, operator, alignment, addToast])
 
   const handleClusterSelect = useCallback((cluster: Cluster) => {
     if (targetingExploit) {
@@ -411,15 +417,27 @@ export default function App() {
     }
     return targetingExploit || spreading ? ids : null
   }, [clusters, operator, userCluster, targetingExploit, spreading])
+  const nearestTarget = useMemo(() => {
+    if (!userCluster || !targetableClusterIds || targetableClusterIds.size === 0) return null
+    let best: { cluster: Cluster; dist: number } | null = null
+    for (const c of clusters) {
+      if (!targetableClusterIds.has(c.id)) continue
+      const dist = haversineKm(userCluster.lat, userCluster.lng, c.lat, c.lng)
+      if (!best || dist < best.dist) best = { cluster: c, dist }
+    }
+    return best
+  }, [clusters, userCluster, targetableClusterIds])
   const hasReachedFirstBreakthrough = personalSteps >= FIRST_BREAKTHROUGH_STEPS
   const showSubscriptionPanel = tier === 'labDirector' || firstExploitInvoked
   const firstRunHint = useMemo(() => {
     if (!operator || firstExploitInvoked) return null
     if (pendingCast) return `Bind ${pendingCast.exploit.exploitType} for ${pendingCast.cluster.name}.`
-    if (targetingExploit) return `Choose a highlighted cluster within ${rangeLabel(targetingExploit.rangeKm)}.`
+    if (targetingExploit) return nearestTarget
+      ? `Choose a highlighted cluster within ${rangeLabel(targetingExploit.rangeKm)}. Nearest: ${nearestTarget.cluster.name}.`
+      : `Choose a highlighted cluster within ${rangeLabel(targetingExploit.rangeKm)}.`
     if (firstExploitSeen || hasReachedFirstBreakthrough) return 'First capability surfaced. Open Exploits and trace it into the world.'
     return `Force the first loss curve break: ${personalSteps.toLocaleString()}/${FIRST_BREAKTHROUGH_STEPS}.`
-  }, [operator, firstExploitInvoked, pendingCast, targetingExploit, firstExploitSeen, hasReachedFirstBreakthrough, personalSteps])
+  }, [operator, firstExploitInvoked, pendingCast, targetingExploit, nearestTarget, firstExploitSeen, hasReachedFirstBreakthrough, personalSteps])
 
   if (loading) {
     return (
