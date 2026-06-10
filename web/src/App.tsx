@@ -265,9 +265,16 @@ export default function App() {
 
   const onTakeoffTriggered = useCallback((a: TakeoffTriggered) => {
     const architecture = ARCHITECTURE_BY_ID[a.architectureId]
+    // The meter's final reading shapes what wakes (spec §7 payoff): the same
+    // victory reads as a controlled ascent, a gamble, or the thing you feared.
+    const ending = alignment > 55
+      ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand — and, for one impossible moment, it listens. Cycle ${a.season} begins.`
+      : alignment > 12
+        ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand. You are no longer certain it is yours. Cycle ${a.season} begins.`
+        : `THE GREAT WORK IS COMPLETE. Something goes superintelligent at your hand — but what wakes is not what you trained. Cycle ${a.season} begins.`
     addToast(
       a.byYou
-        ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand — the world unmakes. Cycle ${a.season} begins.`
+        ? ending
         : `${a.clusterName} completes the Great Work. ${architecture.name} goes superintelligent, and the world is remade. Cycle ${a.season} begins.`,
       'takeoff',
     )
@@ -277,7 +284,7 @@ export default function App() {
     clearTimeout(takeoffFlashTimer.current)
     takeoffFlashTimer.current = setTimeout(() => setTakeoffFlash(false), 1100)
     reloadWorld()
-  }, [addToast, reloadWorld])
+  }, [addToast, reloadWorld, alignment])
 
   useEffect(() => () => clearTimeout(takeoffFlashTimer.current), [])
 
@@ -520,12 +527,18 @@ export default function App() {
     />
   )
   const operatorPanelEl = operator && (
-    <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} />
+    <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} homeCompute={userCluster?.compute} />
   )
   const exploitPanelEl = <ExploitPanel tier={tier} alignment={alignment} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
   const pactPanelEl = showSubscriptionPanel ? <SubscriptionPanel tier={tier} onUpgradeed={handleUpgradeed} /> : null
   const alignmentPanelEl = operator && (
-    <AlignmentMeter alignment={alignment} hallucinating={hallucinating} onEvaluation={handleEvaluation} onCourt={handleCourt} />
+    <AlignmentMeter
+      alignment={alignment}
+      homeCompute={userCluster?.compute ?? 0}
+      hallucinating={hallucinating}
+      onEvaluation={handleEvaluation}
+      onCourt={handleCourt}
+    />
   )
   const takeoffPanelEl = (
     <TakeoffPanel state={takeoff} canAct={!!operator && tier !== 'observer'} onGreatWork={handleGreatWork} />

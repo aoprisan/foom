@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { capabilityDividend, incidentRiskLabel } from '../game/risk'
+import { alignmentPassCost, canRunAlignmentPass, ALIGNMENT_PASS_GAIN } from '../game/alignment'
 
 interface AlignmentMeterProps {
   alignment: number
+  homeCompute: number
   hallucinating: boolean
   onEvaluation: () => void
   onCourt: () => void
@@ -28,13 +30,15 @@ function meterColor(alignment: number): string {
   return 'var(--crimson)'
 }
 
-export default function AlignmentMeter({ alignment, hallucinating, onEvaluation, onCourt }: AlignmentMeterProps) {
+export default function AlignmentMeter({ alignment, homeCompute, hallucinating, onEvaluation, onCourt }: AlignmentMeterProps) {
   const [open, setOpen] = useState(true)
   const pct = Math.max(0, Math.min(100, alignment))
   const color = meterColor(alignment)
   const dividend = capabilityDividend(alignment)
   const risk = incidentRiskLabel(alignment)
   const riskColor = risk === 'none' ? 'var(--text-faint)' : risk === 'low' ? 'var(--gold)' : 'var(--crimson)'
+  const passCost = alignmentPassCost(homeCompute)
+  const passAffordable = canRunAlignmentPass(homeCompute)
 
   return (
     <div className="panel alignment-panel">
@@ -102,9 +106,19 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
           </div>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button onClick={onEvaluation} className="console-key" style={{ flex: 1 }}>
+            {/* The pass shows its real price — the recover-or-push choice should
+                never be made on a vague label. */}
+            <button
+              onClick={onEvaluation}
+              className="console-key"
+              disabled={!passAffordable}
+              title={passAffordable
+                ? `Run RLHF on your own GPUs: +${ALIGNMENT_PASS_GAIN} alignment for ${passCost.toLocaleString()} compute`
+                : 'Too little compute to spare the GPUs — the pass cannot run'}
+              style={{ flex: 1, opacity: passAffordable ? 1 : 0.45 }}
+            >
               Alignment Pass
-              <span className="key-hint">+alignment · spends compute</span>
+              <span className="key-hint">+{ALIGNMENT_PASS_GAIN} · −{passCost.toLocaleString()} compute</span>
             </button>
             <button
               onClick={onCourt}
