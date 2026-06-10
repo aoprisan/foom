@@ -4,10 +4,10 @@ interface CapabilityVizProps {
 
 // Tiers of the stack: compute per block, darkest (raw) to brightest (white-hot).
 const TIERS = [
-  { threshold: 10_000, color: '#3a1c0d' },   // char
-  { threshold: 25_000, color: '#7a3a14' },   // smolder
-  { threshold: 50_000, color: '#d97a2e' },   // ember
-  { threshold: 100_000, color: '#ffd470' },  // furnace gold
+  { threshold: 10_000, color: '#16240c' },   // dark phosphor
+  { threshold: 25_000, color: '#33531a' },   // charge
+  { threshold: 50_000, color: '#6fa42f' },   // live trace
+  { threshold: 100_000, color: '#d9ff8a' },  // white-hot
 ]
 
 const BLOCK_W = 22

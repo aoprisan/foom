@@ -19,7 +19,7 @@ export default function OperatorPanel({ operator, personalSteps, clusterName }: 
     <div className="panel player-panel">
       <div style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, letterSpacing: 0.5, color: 'var(--gold)' }}>{operator.name}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 18, letterSpacing: 1.5, color: 'var(--gold)' }}>{operator.name}</span>
           {operator.tier === 'labDirector' && (
             <span style={{ fontSize: 10, color: 'var(--text-dim)', fontStyle: 'italic' }}>2× compute</span>
           )}

@@ -36,15 +36,15 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     x: graph.nodes[i].x * SIZE, y: graph.nodes[i].y * SIZE,
   }), [graph])
 
-  // Shared backdrop: faint ghost-edges still to bind, the bound edges in gold,
-  // and the snap-nodes themselves (always a little visible — "the points").
+  // Shared backdrop: faint ghost-edges still to bind, the bound edges in hot
+  // phosphor, and the snap-nodes themselves (always a little visible).
   const drawBackdrop = useCallback((ctx: CanvasRenderingContext2D) => {
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
 
     // Ghost guide of unbound edges, fading with mastery.
     if (guideOpacity > 0) {
-      ctx.strokeStyle = `rgba(255, 154, 74, ${guideOpacity})`
+      ctx.strokeStyle = `rgba(180, 240, 78, ${guideOpacity})`
       ctx.lineWidth = 2
       ctx.setLineDash([6, 6])
       for (const [a, b] of graph.edges) {
@@ -55,8 +55,8 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
       ctx.setLineDash([])
     }
 
-    // Bound edges, solid gold.
-    ctx.strokeStyle = '#f5b942'
+    // Bound edges, solid hot phosphor.
+    ctx.strokeStyle = '#d9ff8a'
     ctx.lineWidth = 3
     for (const [a, b] of graph.edges) {
       if (!boundRef.current.has(edgeKey(a, b))) continue
@@ -64,7 +64,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
       ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke()
     }
 
-    // Snap-nodes. A node touched by a bound edge glows gold; the rest stay teal.
+    // Snap-nodes. A node touched by a bound edge burns hot; the rest stay dim.
     const bound = new Set<number>()
     for (const [a, b] of graph.edges) {
       if (boundRef.current.has(edgeKey(a, b))) { bound.add(a); bound.add(b) }
@@ -75,7 +75,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
       const lit = bound.has(i) || i === fromNodeRef.current
       ctx.beginPath()
       ctx.arc(x, y, lit ? 7 : 5, 0, Math.PI * 2)
-      ctx.fillStyle = lit ? `rgba(245, 185, 66, ${dotOpacity})` : `rgba(255, 154, 74, ${dotOpacity})`
+      ctx.fillStyle = lit ? `rgba(217, 255, 138, ${dotOpacity})` : `rgba(180, 240, 78, ${dotOpacity})`
       ctx.fill()
     })
   }, [graph, guideOpacity, nodePx])
@@ -86,10 +86,10 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     ctx.clearRect(0, 0, SIZE, SIZE)
     drawBackdrop(ctx)
 
-    // In-progress drag: a gold thread from the start-node to the pointer.
+    // In-progress drag: a live thread from the start-node to the pointer.
     if (drawingRef.current && fromNodeRef.current >= 0 && livePtRef.current) {
       const p = nodePx(fromNodeRef.current)
-      ctx.strokeStyle = 'rgba(245, 185, 66, 0.6)'
+      ctx.strokeStyle = 'rgba(217, 255, 138, 0.6)'
       ctx.lineWidth = 2
       ctx.beginPath(); ctx.moveTo(p.x, p.y)
       ctx.lineTo(livePtRef.current.x, livePtRef.current.y); ctx.stroke()
@@ -161,8 +161,8 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     redraw()
   }
 
-  // All edges bound: remember the mastery, then sweep the finished prompt in
-  // bright gold before the exploit resolves.
+  // All edges bound: remember the mastery, then sweep the finished prompt
+  // white-hot before the exploit resolves.
   const succeed = () => {
     localStorage.setItem(guideUsesKey(exploit.family), String(uses + 1))
     perfectingRef.current = true
@@ -177,8 +177,8 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
       const t = Math.min(1, (ts - startTs) / DURATION)
       ctx.clearRect(0, 0, SIZE, SIZE)
       drawBackdrop(ctx)
-      ctx.strokeStyle = `rgba(255, 212, 112, ${0.4 + 0.6 * t})`
-      ctx.shadowColor = 'rgba(255, 212, 112, 0.9)'
+      ctx.strokeStyle = `rgba(238, 244, 248, ${0.4 + 0.6 * t})`
+      ctx.shadowColor = 'rgba(217, 255, 138, 0.9)'
       ctx.shadowBlur = 6 + 14 * t
       ctx.lineWidth = 4
       ctx.lineCap = 'round'
@@ -202,7 +202,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <div style={{ textAlign: 'center' }}>
-          <div className="eyebrow" style={{ color: 'var(--crimson)', fontSize: 20, letterSpacing: 3, textShadow: '0 0 18px rgba(255, 59, 78,0.4)' }}>
+          <div className="eyebrow" style={{ color: 'var(--crimson)', fontSize: 20, letterSpacing: 3, textShadow: '0 0 18px rgba(255, 71, 87, 0.4)' }}>
             BIND {FAMILY_PROMPT_NAME[exploit.family].toUpperCase()}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
@@ -219,8 +219,8 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
           onPointerUp={onPointerUp}
           style={{
             width: SIZE, height: SIZE, touchAction: 'none',
-            borderRadius: 12, border: '1px solid var(--border)',
-            background: 'radial-gradient(circle at 50% 50%, rgba(255, 154, 74,0.06), rgba(6,9,16,0.9))',
+            borderRadius: 0, border: '1px solid var(--border-strong)',
+            background: 'radial-gradient(circle at 50% 50%, rgba(180, 240, 78, 0.05), rgba(4, 7, 10, 0.92))',
             cursor: 'crosshair',
           }}
         />
@@ -240,6 +240,7 @@ export default function PromptCanvas({ exploit, targetClusterName, onMatch, onCa
 }
 
 const btnGhost: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-  borderRadius: 8, padding: '8px 14px', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 13,
+  background: 'rgba(200,224,235,0.04)', border: '1px solid var(--border)',
+  borderRadius: 0, padding: '8px 14px', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 12,
+  letterSpacing: 1, textTransform: 'uppercase',
 }

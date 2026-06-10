@@ -53,17 +53,17 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
       transition: 'opacity 0.4s ease-out',
     }}>
       <div style={{
-        background: 'linear-gradient(180deg, rgba(8,15,18,0.97), rgba(3,6,11,0.99))',
+        background: 'linear-gradient(180deg, rgba(8,14,19,0.97), rgba(3,6,9,0.99))',
         border: '1px solid var(--border-strong)',
-        borderRadius: 4, padding: 30, width: 420, maxWidth: '92vw',
+        borderRadius: 0, padding: 30, width: 420, maxWidth: '92vw',
         maxHeight: '84vh', display: 'flex', flexDirection: 'column', gap: 16,
-        boxShadow: '0 24px 70px -16px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255, 176, 110,0.09)',
+        boxShadow: '0 24px 70px -16px rgba(0,0,0,0.85), inset 0 1px 0 rgba(200, 224, 235, 0.06)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 2 }}>
           <h2 style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700, fontStyle: 'italic', color: 'var(--bone)',
-            fontSize: 52, lineHeight: 1, letterSpacing: 1,
-            textShadow: '0 0 30px rgba(255, 154, 74,0.5)',
+            fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--bone)',
+            fontSize: 48, lineHeight: 1, letterSpacing: 8,
+            textShadow: '0 0 26px rgba(180, 240, 78, 0.4)',
           }}>
             FOOM
           </h2>
@@ -101,8 +101,8 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
                   key={cluster.id}
                   onClick={() => { setSelectedClusterId(cluster.id); setStep('architecture') }}
                   style={listButtonStyle(cluster.id === selectedClusterId)}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = cluster.id === selectedClusterId ? 'rgba(255, 154, 74,0.15)' : 'transparent')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,224,235,0.05)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = cluster.id === selectedClusterId ? 'rgba(180, 240, 78, 0.12)' : 'transparent')}
                 >
                   {cluster.name}, <span style={{ color: 'var(--text-dim)' }}>{cluster.country}</span>
                 </button>
@@ -122,12 +122,13 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
                   key={p.id}
                   onClick={() => { setArchitectureId(p.id); setStep('name') }}
                   style={{
-                    textAlign: 'left', background: 'rgba(255,255,255,0.03)',
+                    textAlign: 'left', background: 'rgba(200,224,235,0.03)',
                     border: `1px solid ${architectureId === p.id ? p.color : 'var(--border)'}`,
-                    borderRadius: 10, padding: '10px 12px', cursor: 'pointer', color: 'var(--text)',
+                    borderLeft: `2px solid ${p.color}`,
+                    borderRadius: 0, padding: '10px 12px', cursor: 'pointer', color: 'var(--text)',
                   }}
                 >
-                  <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600, color: p.color, fontSize: 22, lineHeight: 1.05 }}>{p.name}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 400, color: p.color, fontSize: 21, lineHeight: 1.05, letterSpacing: 1.5 }}>{p.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{p.domain}</div>
                   <div style={{ fontSize: 11, marginTop: 4 }}>
                     <span style={{ color: 'var(--teal)' }}>＋ {p.boon}</span><br />
@@ -162,9 +163,10 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
                 onClick={handleSubmit}
                 disabled={!name.trim() || submitting}
                 style={{
-                  flex: 2, background: 'var(--gold)', border: 'none', borderRadius: 8,
-                  padding: '10px 0', color: '#000', cursor: 'pointer',
-                  fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14,
+                  flex: 2, background: 'var(--teal)', border: 'none', borderRadius: 0,
+                  padding: '10px 0', color: '#060b06', cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 13,
+                  letterSpacing: 1.5, textTransform: 'uppercase',
                   opacity: !name.trim() || submitting ? 0.5 : 1,
                 }}
               >
@@ -181,22 +183,22 @@ export default function Onboarding({ clusters, onRegistered, fading }: Onboardin
 }
 
 const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-  borderRadius: 8, padding: '10px 14px', color: 'var(--text)',
+  background: 'rgba(200,224,235,0.04)', border: '1px solid var(--border)',
+  borderRadius: 0, padding: '10px 14px', color: 'var(--text)',
   fontFamily: 'var(--font-sans)', fontSize: 14, outline: 'none',
 }
 
 function listButtonStyle(selected: boolean): React.CSSProperties {
   return {
-    background: selected ? 'rgba(255, 154, 74,0.15)' : 'transparent',
-    border: 'none', borderRadius: 6, padding: '8px 12px',
+    background: selected ? 'rgba(180, 240, 78, 0.12)' : 'transparent',
+    border: 'none', borderRadius: 0, padding: '8px 12px',
     color: 'var(--text)', cursor: 'pointer', textAlign: 'left',
     fontFamily: 'var(--font-sans)', fontSize: 14, transition: 'background 0.15s',
   }
 }
 
 const backButtonStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-  borderRadius: 8, padding: '10px 0', color: 'var(--text-dim)',
+  background: 'rgba(200,224,235,0.04)', border: '1px solid var(--border)',
+  borderRadius: 0, padding: '10px 0', color: 'var(--text-dim)',
   cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14,
 }

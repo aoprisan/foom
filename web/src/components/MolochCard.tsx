@@ -53,15 +53,15 @@ export default function MolochCard({ bargain, onAccept, onDecline }: MolochCardP
     <div className="panel moloch-card" style={{
       position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
       width: 'min(360px, calc(100vw - 32px))', zIndex: 60,
-      border: '1px solid rgba(245, 185, 66, 0.45)',
-      boxShadow: '0 0 48px rgba(245, 185, 66, 0.22), 0 24px 60px -18px rgba(0,0,0,0.9), inset 0 0 30px rgba(245, 185, 66, 0.07)',
-      background: 'rgba(26, 14, 5, 0.94)', backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 180, 84, 0.45)',
+      boxShadow: '0 0 44px rgba(255, 180, 84, 0.18), 0 24px 60px -18px rgba(0,0,0,0.9), inset 0 0 28px rgba(255, 180, 84, 0.06)',
+      background: 'rgba(14, 11, 6, 0.95)', backdropFilter: 'blur(10px)',
       padding: 18, animation: 'molochIn 0.4s ease-out',
     }}>
       <div className="eyebrow" style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: 2, marginBottom: 6 }}>
         Moloch, the Tempter · a bargain
       </div>
-      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600, fontSize: 27, lineHeight: 1.1, color: 'var(--bone)', marginBottom: 10, textShadow: '0 0 22px rgba(245,185,66,0.3)' }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 26, lineHeight: 1.15, letterSpacing: 1.5, color: 'var(--bone)', marginBottom: 10, textShadow: '0 0 20px rgba(255,180,84,0.3)' }}>
         {bargain.title}
       </div>
       <div className="liturgy" style={{ fontSize: 16, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>

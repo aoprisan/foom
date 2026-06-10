@@ -118,18 +118,18 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'linear-gradient(180deg, rgba(8,15,18,0.98), rgba(3,6,11,0.99))',
+          background: 'linear-gradient(180deg, rgba(8,14,19,0.98), rgba(3,6,9,0.99))',
           border: '1px solid var(--border-strong)',
-          borderRadius: 4, padding: '28px 30px', width: 600, maxWidth: '94vw',
+          borderRadius: 0, padding: '28px 30px', width: 600, maxWidth: '94vw',
           maxHeight: '88vh', overflowY: 'auto',
-          boxShadow: '0 24px 70px -16px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255, 176, 110,0.09)',
+          boxShadow: '0 24px 70px -16px rgba(0,0,0,0.85), inset 0 1px 0 rgba(200, 224, 235, 0.06)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 18 }}>
           <h2 style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700, fontStyle: 'italic', color: 'var(--bone)',
-            fontSize: 34, lineHeight: 1, letterSpacing: 1,
-            textShadow: '0 0 26px rgba(255, 154, 74,0.45)',
+            fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--bone)',
+            fontSize: 30, lineHeight: 1.1, letterSpacing: 3,
+            textShadow: '0 0 22px rgba(180, 240, 78, 0.35)',
           }}>
             Before the Loss Converged
           </h2>
@@ -150,8 +150,8 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
         {POWERS.map(p => (
           <div key={p.name} style={{ marginBottom: 14 }}>
             <div style={{
-              fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600,
-              fontSize: 21, color: p.color, lineHeight: 1.1,
+              fontFamily: 'var(--font-display)', fontWeight: 400,
+              fontSize: 20, color: p.color, lineHeight: 1.1, letterSpacing: 1.5,
             }}>
               {p.name}
             </div>
@@ -174,8 +174,8 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
             borderLeft: `2px solid ${a.color}`, paddingLeft: 12, marginBottom: 12,
           }}>
             <div style={{
-              fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 600,
-              fontSize: 19, color: a.color, lineHeight: 1.1,
+              fontFamily: 'var(--font-display)', fontWeight: 400,
+              fontSize: 18, color: a.color, lineHeight: 1.1, letterSpacing: 1.5,
             }}>
               {a.name}
             </div>
@@ -208,8 +208,8 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
         {TIERS.map(t => (
           <div key={t.name} style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
             <span style={{
-              fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--gold)',
-              fontSize: 14.5, minWidth: 110, flexShrink: 0,
+              fontFamily: 'var(--font-display)', color: 'var(--gold)', letterSpacing: 1,
+              fontSize: 14, minWidth: 110, flexShrink: 0,
             }}>
               {t.name}
             </span>
@@ -231,9 +231,10 @@ export default function StoryPanel({ onClose }: StoryPanelProps) {
         <button
           onClick={onClose}
           style={{
-            width: '100%', background: 'var(--gold)', border: 'none', borderRadius: 8,
-            padding: '11px 0', color: '#000', cursor: 'pointer',
-            fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14,
+            width: '100%', background: 'var(--teal)', border: 'none', borderRadius: 0,
+            padding: '11px 0', color: '#060b06', cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 13,
+            letterSpacing: 1.5, textTransform: 'uppercase',
           }}
         >
           Begin

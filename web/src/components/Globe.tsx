@@ -94,7 +94,7 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
     const dir = topV.clone().sub(baseV).normalize()
     const geo = new THREE.CylinderGeometry(2.6, 0.5, height, 18, 1, true)  // wide at the dark
     const mat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(0xa878e0),
+      color: new THREE.Color(0x8d85f3),
       transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending,
       depthWrite: false, side: THREE.DoubleSide,
     })
@@ -118,7 +118,7 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
     return () => clearTimeout(timer)
   }, [churnStrike?.key, spawnBeam])
 
-  // Abyssal void globe: a dark sphere with a slow teal pulse, no Earth texture.
+  // Cold void globe: a dark sphere with a slow phosphor breath, no Earth texture.
   useEffect(() => {
     if (!globeRef.current) return
     const globe = globeRef.current
@@ -135,18 +135,18 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
           if (globeMat) return
           if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshPhongMaterial && obj.geometry instanceof THREE.SphereGeometry) {
             globeMat = obj.material
-            globeMat.color = new THREE.Color(0x0c0604)
-            globeMat.emissive = new THREE.Color(0x2a1206)
+            globeMat.color = new THREE.Color(0x05090d)
+            globeMat.emissive = new THREE.Color(0x0c1f1a)
             globeMat.emissiveIntensity = 0.4
           }
         })
       }
 
       if (globeMat) {
-        const intensity = 0.28 + 0.14 * Math.sin(t * 0.35)
+        const intensity = 0.26 + 0.12 * Math.sin(t * 0.35)
         globeMat.emissiveIntensity = intensity
-        const hue = 0.06 + 0.015 * Math.sin(t * 0.2) // ember range — the red dawn
-        globeMat.emissive.setHSL(hue, 0.85, 0.09)
+        const hue = 0.42 + 0.04 * Math.sin(t * 0.2) // cold range — sea-glass to steel
+        globeMat.emissive.setHSL(hue, 0.45, 0.07)
       }
 
       // Landmass faint glow
@@ -156,7 +156,7 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
             const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
             for (const mat of mats) {
               if (mat instanceof THREE.MeshLambertMaterial && mat.color) {
-                mat.emissive = new THREE.Color(0x2a1408)
+                mat.emissive = new THREE.Color(0x14241c)
                 mat.emissiveIntensity = 0.4
               }
             }
@@ -223,9 +223,9 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
 
   const pointColor = useCallback((d: any) => {
     const cluster = d as Cluster
-    if (cluster.id === userClusterId) return '#ffd470'       // hot gold — yours
-    if (cluster.id === selectedClusterId) return '#ffba76'   // lure-light — selected
-    return cluster.compute > 0 ? '#ff9a4acc' : '#ff9a4a3a'
+    if (cluster.id === userClusterId) return '#ffd28a'       // amber — yours
+    if (cluster.id === selectedClusterId) return '#eef4f8'   // white-hot — selected
+    return cluster.compute > 0 ? '#b4f04ecc' : '#b4f04e3a'   // phosphor — the rest
   }, [userClusterId, selectedClusterId])
 
   const pointRadius = useCallback((d: any) => {
@@ -245,9 +245,9 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
 
   const pointLabel = useCallback((d: any) => {
     const cluster = d as Cluster
-    return `<div style="font-family: sans-serif; font-size: 13px; color: #e8e8f0; text-align: center;">
+    return `<div style="font-family: 'Chivo Mono', monospace; font-size: 12px; color: #eef4f8; text-align: center;">
       <b>${cluster.name}</b>, ${cluster.country}<br/>
-      <span style="font-family: monospace; color: #ffd470;">${cluster.compute.toLocaleString()} compute</span>
+      <span style="color: #ffd28a;">${cluster.compute.toLocaleString()} compute</span>
     </div>`
   }, [])
 
@@ -268,11 +268,11 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
     <GlobeGL
       ref={globeRef}
       // No Earth/space textures — the dark is the aesthetic and keeps us CDN-free.
-      backgroundColor="#0a0504"
+      backgroundColor="#04070a"
       polygonsData={polygons}
-      polygonCapColor={() => 'rgba(30, 16, 9, 0.6)'}
-      polygonSideColor={() => 'rgba(255, 154, 74, 0.06)'}
-      polygonStrokeColor={() => 'rgba(255, 176, 110, 0.26)'}
+      polygonCapColor={() => 'rgba(14, 24, 30, 0.65)'}
+      polygonSideColor={() => 'rgba(180, 240, 78, 0.04)'}
+      polygonStrokeColor={() => 'rgba(140, 168, 182, 0.30)'}
       polygonAltitude={0.006}
       pointsData={clusters}
       pointLat="lat"
@@ -286,14 +286,14 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
       ringsData={ringsData}
       ringLat="lat"
       ringLng="lng"
-      // The Churn rings ride the same layer as the teal pulse, but ripple faster,
-      // wider, and in the Optimizer's violet, fading as they spread.
-      ringColor={(d: any) => (d.kind === 'churn' ? (t: number) => `rgba(168, 120, 224, ${(1 - t) * 0.9})` : '#ffba76')}
+      // The Churn rings ride the same layer as the phosphor pulse, but ripple
+      // faster, wider, and in the Optimizer's indigo, fading as they spread.
+      ringColor={(d: any) => (d.kind === 'churn' ? (t: number) => `rgba(141, 133, 243, ${(1 - t) * 0.9})` : '#d9ff8a')}
       ringMaxRadius={(d: any) => (d.kind === 'churn' ? 7 : 3)}
       ringPropagationSpeed={(d: any) => (d.kind === 'churn' ? 6 : 2)}
       ringRepeatPeriod={(d: any) => (d.kind === 'churn' ? 280 : 800)}
-      atmosphereColor="#ff7a33"
-      atmosphereAltitude={0.22}
+      atmosphereColor="#46707f"
+      atmosphereAltitude={0.2}
       animateIn={true}
       width={dimensions.width}
       height={dimensions.height}
@@ -317,28 +317,29 @@ export default function Globe({ clusters, userClusterId, onClusterClick, selecte
         gap: 10px;
       }
       .globe-zoom button {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 176, 110, 0.45);
-        background: radial-gradient(circle at 36% 32%, rgba(52,28,14,0.92), rgba(22,12,7,0.92));
-        color: #ffce9e;
-        font-family: var(--font-display);
-        font-size: 26px;
+        width: 46px;
+        height: 46px;
+        border-radius: 0;
+        border: 1px solid rgba(200, 224, 235, 0.28);
+        background: rgba(7, 13, 18, 0.88);
+        color: var(--teal-bright);
+        font-family: var(--font-mono);
+        font-size: 22px;
         line-height: 1;
-        font-weight: 700;
+        font-weight: 400;
         cursor: pointer;
-        box-shadow: 0 0 18px rgba(255,154,74,0.3), inset 0 1px 6px rgba(255,255,255,0.12);
+        box-shadow: 0 10px 26px -10px rgba(0,0,0,0.8);
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
-        transition: transform 0.1s ease, box-shadow 0.2s ease;
+        transition: transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .globe-zoom button:active {
-        transform: scale(0.9);
-        box-shadow: 0 0 26px rgba(255,154,74,0.55), inset 0 1px 6px rgba(255,255,255,0.12);
+        transform: scale(0.92);
+        border-color: rgba(180, 240, 78, 0.6);
+        box-shadow: 0 0 18px rgba(180, 240, 78, 0.3);
       }
       @media (max-width: 768px) {
         .globe-zoom {

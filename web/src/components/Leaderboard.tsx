@@ -81,9 +81,9 @@ export default function Leaderboard({ version }: LeaderboardProps) {
                     position: 'absolute', inset: '0 auto 0 0',
                     width: `${share * 100}%`,
                     background: first
-                      ? 'linear-gradient(90deg, rgba(245,185,66,0.16), rgba(245,185,66,0.03))'
-                      : 'linear-gradient(90deg, rgba(255,154,74,0.10), rgba(255,154,74,0.015))',
-                    borderLeft: first ? '2px solid rgba(245,185,66,0.7)' : '2px solid rgba(255,154,74,0.35)',
+                      ? 'linear-gradient(90deg, rgba(255,180,84,0.16), rgba(255,180,84,0.03))'
+                      : 'linear-gradient(90deg, rgba(180,240,78,0.09), rgba(180,240,78,0.015))',
+                    borderLeft: first ? '2px solid rgba(255,180,84,0.7)' : '2px solid rgba(180,240,78,0.35)',
                     transition: 'width 0.6s ease',
                   }} />
                   <div style={{ display: 'flex', gap: 7, alignItems: 'center', minWidth: 0, position: 'relative' }}>
@@ -93,7 +93,7 @@ export default function Leaderboard({ version }: LeaderboardProps) {
                     <span style={{
                       fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       color: first ? 'var(--gold-bright)' : 'var(--text)',
-                      textShadow: first ? '0 0 10px rgba(245,185,66,0.35)' : 'none',
+                      textShadow: first ? '0 0 10px rgba(255,180,84,0.35)' : 'none',
                     }}>
                       {cluster.name}
                     </span>

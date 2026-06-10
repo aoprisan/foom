@@ -17,7 +17,7 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
       </div>
       <div className="mono" style={{
         fontSize: 24, color: 'var(--gold-bright)', fontWeight: 500, letterSpacing: 0.5,
-        textShadow: '0 0 20px rgba(240,197,74,0.4)',
+        textShadow: '0 0 18px rgba(255,180,84,0.35)',
       }}>
         {totalCompute.toLocaleString()}
       </div>
@@ -52,7 +52,7 @@ export default function WorldPanel({ stats, totalCompute, takeoff }: WorldPanelP
           {takeoff.converged ? (
             <span style={{
               fontSize: 10, letterSpacing: 2, color: 'var(--gold)', fontWeight: 700,
-              textShadow: '0 0 12px rgba(245, 185, 66,0.6)', animation: 'convergeBlink 1.6s ease-in-out infinite',
+              textShadow: '0 0 12px rgba(255, 180, 84, 0.6)', animation: 'convergeBlink 1.6s ease-in-out infinite',
             }}>
               ✦ TAKEOFF IMMINENT ✦
             </span>

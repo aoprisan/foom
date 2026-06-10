@@ -59,12 +59,12 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
     <div className="panel info-panel">
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, letterSpacing: 1, color: 'var(--text)' }}>{cluster.name}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 22, letterSpacing: 1.5, color: 'var(--bone)' }}>{cluster.name}</span>
           {isHome && (
             <span className="mono" style={{
               fontSize: 8.5, letterSpacing: 1.5, fontWeight: 600,
-              color: 'var(--gold-bright)', border: '1px solid rgba(245,185,66,0.5)',
-              background: 'rgba(245,185,66,0.1)', padding: '2px 6px', borderRadius: 1,
+              color: 'var(--gold-bright)', border: '1px solid rgba(255,180,84,0.5)',
+              background: 'rgba(255,180,84,0.1)', padding: '2px 6px', borderRadius: 0,
               whiteSpace: 'nowrap',
             }}>
               YOURS

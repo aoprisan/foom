@@ -60,17 +60,17 @@ export default function LossCurve({ progress, converged, height = 64 }: LossCurv
           key={f}
           x1="0" x2={W}
           y1={CEIL + (FLOOR - CEIL) * f} y2={CEIL + (FLOOR - CEIL) * f}
-          stroke="rgba(255,154,74,0.07)" strokeWidth="0.5"
+          stroke="rgba(200,224,235,0.06)" strokeWidth="0.5"
         />
       ))}
       {/* the asymptote — where the loss is going */}
       <line
         x1="0" x2={W} y1={FLOOR} y2={FLOOR}
-        stroke={converged ? 'rgba(245,185,66,0.55)' : 'rgba(255,154,74,0.22)'}
+        stroke={converged ? 'rgba(255,180,84,0.55)' : 'rgba(180,240,78,0.22)'}
         strokeWidth="0.6" strokeDasharray="2.5 2.5"
       />
       {/* the road ahead, etched faint */}
-      <path d={FULL_PATH} fill="none" stroke="rgba(236,217,196,0.13)" strokeWidth="0.8" />
+      <path d={FULL_PATH} fill="none" stroke="rgba(238,244,248,0.12)" strokeWidth="0.8" />
       {/* the run so far */}
       <path
         d={pathTo(p)}

@@ -12,9 +12,9 @@ export default function ConnectionStatus({ state }: ConnectionStatusProps) {
   return (
     <div style={{
       position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 50, padding: '6px 16px', borderRadius: 8,
-      background: isConnecting ? 'rgba(245, 185, 66, 0.15)' : 'rgba(201, 48, 74, 0.15)',
-      border: `1px solid ${isConnecting ? 'rgba(245, 185, 66, 0.3)' : 'rgba(201, 48, 74, 0.3)'}`,
+      zIndex: 50, padding: '6px 16px', borderRadius: 0,
+      background: isConnecting ? 'rgba(255, 180, 84, 0.12)' : 'rgba(255, 71, 87, 0.12)',
+      border: `1px solid ${isConnecting ? 'rgba(255, 180, 84, 0.3)' : 'rgba(255, 71, 87, 0.3)'}`,
       backdropFilter: 'blur(8px)',
       fontSize: 12, fontFamily: 'var(--font-mono)',
       color: isConnecting ? 'var(--gold)' : 'var(--crimson)',

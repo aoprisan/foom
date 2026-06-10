@@ -103,7 +103,7 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
     setFloats(prev => [...prev, { id, value: multiplier, dx: (Math.random() - 0.5) * 36 }])
     setTimeout(() => setFloats(prev => prev.filter(f => f.id !== id)), 750)
 
-    // embers — more of them, flung further, as the streak heats up
+    // data bits — more of them, flung further, as the streak heats up
     const count = 8 + Math.round(heat * 10)
     const dist = 50 + Math.random() * 20 + heat * 40
     const newParticles: Particle[] = Array.from({ length: count }, (_, i) => {
@@ -112,8 +112,8 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
         id: id + i,
         dx: Math.cos(angle) * dist,
         dy: Math.sin(angle) * dist,
-        size: 4 + Math.random() * 4,
-        color: Math.random() < 0.4 ? 'var(--gold-bright)' : 'var(--teal)',
+        size: 3 + Math.random() * 4,
+        color: Math.random() < 0.35 ? 'var(--gold-bright)' : 'var(--teal)',
       }
     })
     setParticles(prev => [...prev, ...newParticles])
@@ -142,9 +142,9 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
             position: 'absolute', left: '50%', top: '50%',
             transform: 'translate(-50%, -50%)',
             pointerEvents: 'none', zIndex: 30,
-            fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 700,
-            fontSize: 22, color: 'var(--gold-bright)',
-            textShadow: '0 0 12px rgba(240,197,74,0.7)',
+            fontFamily: 'var(--font-mono)', fontWeight: 600,
+            fontSize: 18, color: 'var(--teal-bright)',
+            textShadow: '0 0 10px rgba(180,240,78,0.7)',
             opacity: 0,
             animation: 'floatUp 0.75s ease-out forwards',
             '--fdx': `${f.dx}px`,
@@ -156,8 +156,8 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
         {particles.map(p => (
           <div key={p.id} style={{
             position: 'absolute', left: '50%', top: '50%', width: p.size, height: p.size,
-            borderRadius: '50%', background: p.color,
-            boxShadow: `0 0 8px ${p.color}`,
+            borderRadius: 1, background: p.color,
+            boxShadow: `0 0 6px ${p.color}`,
             pointerEvents: 'none', zIndex: 20,
             opacity: 0,
             animation: 'particleFade 0.6s ease-out forwards',
@@ -167,8 +167,8 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
 
         {ripples.map(id => (
           <div key={id} style={{
-            position: 'absolute', inset: -10,
-            borderRadius: '50%', border: '2px solid var(--teal)',
+            position: 'absolute', inset: -8,
+            borderRadius: 4, border: '1px solid var(--teal)',
             animation: 'ripple 0.6s ease-out forwards',
             pointerEvents: 'none',
           }} />
@@ -178,34 +178,41 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
           onClick={handleTrain}
           className="train-orb"
           style={{
-            width: 120, height: 120, borderRadius: '50%',
-            background: tier === 'observer'
-              ? 'radial-gradient(circle at 36% 32%, #ffce9e, #ff8a3c 45%, #5a2410 100%)'
-              : 'radial-gradient(circle at 36% 32%, #ffd0a0, #ff8a3c 42%, #5a2410 100%)',
-            border: '1px solid rgba(255, 176, 110, 0.55)', cursor: 'pointer',
+            width: 124, height: 124, borderRadius: 6,
+            background: 'linear-gradient(180deg, #0d1812, #070d0a 60%, #040805)',
+            border: tier === 'observer'
+              ? '1px solid rgba(255, 180, 84, 0.6)'
+              : '1px solid rgba(180, 240, 78, 0.55)',
+            cursor: 'pointer',
             // trainPulse animates box-shadow, so heat rides on filter instead
-            // (brighter + a hotter ember halo as the streak builds).
-            boxShadow: '0 0 44px rgba(255, 138, 60, 0.55), 0 0 12px rgba(255,206,158,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25)',
-            filter: `brightness(${1 + heat * 0.28}) drop-shadow(0 0 ${heat * 26}px rgba(255,138,60,${heat * 0.9}))`,
+            // (brighter + a hotter phosphor halo as the streak builds).
+            boxShadow: '0 0 0 1px rgba(0,0,0,0.7), 0 12px 30px -10px rgba(0,0,0,0.85), 0 0 26px rgba(180,240,78,0.22), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -10px 18px rgba(0,0,0,0.6)',
+            filter: `brightness(${1 + heat * 0.35}) drop-shadow(0 0 ${heat * 22}px rgba(180,240,78,${heat * 0.8}))`,
             transition: pressing
               ? 'transform 0.06s ease-out, filter 0.12s ease-out'
               : 'transform 0.32s cubic-bezier(0.34, 1.7, 0.5, 1), filter 0.4s ease-out', // springy overshoot on release
-            transform: pressing ? 'scale(0.88)' : 'scale(1)',
+            transform: pressing ? 'translateY(3px) scale(0.96)' : 'translateY(0) scale(1)',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 600, fontStyle: 'italic',
-            letterSpacing: 0.5, color: '#2a0f02',
-            textShadow: '0 1px 1px rgba(255,255,255,0.35)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+            fontFamily: 'var(--font-display)', fontSize: 23, fontWeight: 400,
+            letterSpacing: 2, color: tier === 'observer' ? 'var(--gold-bright)' : 'var(--teal-bright)',
+            textShadow: '0 0 14px rgba(180,240,78,0.5)',
             animation: 'trainPulse 3.4s ease-in-out infinite',
           }}
         >
           {buttonLabel}
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 500,
+            letterSpacing: 2.5, color: 'var(--text-dim)', textShadow: 'none',
+          }}>
+            {tier === 'observer' ? 'COME ONLINE' : 'GRADIENT STEP'}
+          </span>
         </button>
       </div>
 
       {tier !== 'observer' && (
-        <span className="mono" style={{ fontSize: 16, color: 'var(--gold-bright)', textShadow: '0 0 14px rgba(240,197,74,0.45)' }}>
+        <span className="mono" style={{ fontSize: 16, color: 'var(--gold-bright)', textShadow: '0 0 12px rgba(255,180,84,0.4)' }}>
           {personalSteps.toLocaleString()}
         </span>
       )}
@@ -213,7 +220,7 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
       {combo >= 5 && (
         <span className="mono" style={{
           fontSize: 13, color: 'var(--teal-bright)',
-          textShadow: `0 0 ${6 + heat * 12}px rgba(255,138,60,0.8)`,
+          textShadow: `0 0 ${6 + heat * 12}px rgba(180,240,78,0.8)`,
           letterSpacing: 1,
         }}>
           ×{combo} streak
@@ -231,8 +238,8 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
 
       <style>{`
         @keyframes ripple {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(1.8); opacity: 0; }
+          0% { transform: scale(1); opacity: 0.55; }
+          100% { transform: scale(1.6); opacity: 0; }
         }
         @keyframes particleFade {
           0% { transform: translate(0, 0) scale(1); opacity: 1; }
@@ -249,8 +256,8 @@ export default function TrainButton({ onTrain, personalSteps, clusterName, rateL
           100% { opacity: 0; }
         }
         @keyframes trainPulse {
-          0%, 100% { box-shadow: 0 0 44px rgba(255,138,60,0.55), 0 0 12px rgba(255,206,158,0.7), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
-          50% { box-shadow: 0 0 64px rgba(255,138,60,0.78), 0 0 20px rgba(255,206,158,0.9), inset 0 -6px 14px rgba(0,0,0,0.45), inset 0 4px 10px rgba(255,255,255,0.25); }
+          0%, 100% { box-shadow: 0 0 0 1px rgba(0,0,0,0.7), 0 12px 30px -10px rgba(0,0,0,0.85), 0 0 26px rgba(180,240,78,0.22), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -10px 18px rgba(0,0,0,0.6); }
+          50% { box-shadow: 0 0 0 1px rgba(0,0,0,0.7), 0 12px 30px -10px rgba(0,0,0,0.85), 0 0 40px rgba(180,240,78,0.4), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -10px 18px rgba(0,0,0,0.6); }
         }
         @media (prefers-reduced-motion: reduce) {
           .train-orb { animation: none !important; }

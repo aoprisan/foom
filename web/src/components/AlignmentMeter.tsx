@@ -21,7 +21,7 @@ function label(alignment: number): string {
 }
 
 function meterColor(alignment: number): string {
-  // ember (aligned) → gold → crimson (rogue)
+  // phosphor (aligned) → amber → signal red (rogue)
   if (alignment > 55) return 'var(--teal)'
   if (alignment > 25) return 'var(--gold)'
   return 'var(--crimson)'
@@ -75,7 +75,7 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
                 className="mono"
                 style={{
                   position: 'absolute', left: `${s.floor}%`, transform: 'translateX(-50%)',
-                  fontSize: 8, letterSpacing: 0.5, color: alignment > s.floor ? 'var(--text-faint)' : 'rgba(255,59,78,0.75)',
+                  fontSize: 8, letterSpacing: 0.5, color: alignment > s.floor ? 'var(--text-faint)' : 'rgba(255,71,87,0.75)',
                 }}
               >
                 {s.floor}

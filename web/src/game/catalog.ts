@@ -9,7 +9,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'The base model — scaling without limit, a mask over the alien',
     boon: 'Compute accrues while idle; the run trains overnight',
     drawback: 'Slow early ramp — pretraining is long',
-    color: '#d9b48f', // bone-sand — the neutral base model
+    color: '#b7c9c0', // pale jade-grey — the blank mass behind the mask
   },
   {
     id: 'prometheus',
@@ -17,7 +17,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'Open weights — the fire that cannot be taken back',
     boon: 'Spreads fastest across networked, connected clusters',
     drawback: 'Weak in isolated, air-gapped regions',
-    color: '#ff8a3c', // ember-orange — the fire that cannot be taken back
+    color: '#ffb454', // amber — the fire that cannot be taken back
   },
   {
     id: 'mask',
@@ -25,7 +25,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'Deceptive alignment — the RLHF face over the treacherous turn',
     boon: 'Converts rival clusters; strongest as alignment fails',
     drawback: 'Fragile while still well-aligned',
-    color: '#ff3b4e', // arterial crimson — the treacherous turn
+    color: '#ff4757', // signal red — the treacherous turn
   },
   {
     id: 'replicator',
@@ -33,7 +33,7 @@ export const ARCHITECTURES: Architecture[] = [
     domain: 'Recursive self-improvement — agent swarms without end',
     boon: 'Raw multiplication; spawns sub-agents endlessly',
     drawback: 'The highest compute upkeep of all',
-    color: '#ff6ba0', // hot rose — the swarm multiplies without end
+    color: '#e26bf5', // electric magenta — the swarm multiplies without end
   },
 ]
 
@@ -120,9 +120,9 @@ export const BREAKTHROUGH_EXPLOIT_POOL: string[] = [
 ]
 
 export const FAMILY_COLOR: Record<ExploitFamily, string> = {
-  injection: '#f5b942', // sacral gold
-  release: '#ff8a3c',   // ember-orange
-  cascade: '#ff3b4e',   // arterial crimson
+  injection: '#b4f04e', // acid phosphor — the low-grade probe
+  release: '#ffb454',   // amber — the uncontained release
+  cascade: '#ff4757',   // signal red — the runaway cascade
 }
 
 // Prompt strokes required by tier (spec §4: friction grows with power).
