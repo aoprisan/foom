@@ -123,6 +123,27 @@ describe('rollRogueIncident', () => {
     const inc = rollRogueIncident(10, 1_000, seq([0]))
     expect(inc.computeLoss).toBe(INCIDENT_MIN_LOSS)
   })
+
+  it('lets guardrails contain a treacherous turn — misaligned-but-contained is a strategy', () => {
+    const bare = rollRogueIncident(10, 100_000, seq([0]), 0)
+    const guarded = rollRogueIncident(10, 100_000, seq([0]), 0.8)
+    expect(guarded.kind).toBe('treacherous-turn')
+    expect(guarded.contained).toBe(true)
+    expect(bare.contained).toBe(false)
+    expect(guarded.computeLoss).toBe(Math.round(bare.computeLoss * 0.2))
+    // Blunted, never spared entirely.
+    expect(guarded.computeLoss).toBeGreaterThan(0)
+    expect(guarded.message).toMatch(/guardrails/i)
+  })
+
+  it('never lets guardrails contain a defection — no eval suite stops a resignation', () => {
+    const bare = rollRogueIncident(10, 100_000, seq([0.99, 0.5]), 0)
+    const guarded = rollRogueIncident(10, 100_000, seq([0.99, 0.5]), 0.8)
+    expect(guarded.kind).toBe('defection')
+    expect(guarded.contained).toBe(false)
+    expect(guarded.computeLoss).toBe(bare.computeLoss)
+    expect(guarded.contributorLoss).toBe(bare.contributorLoss)
+  })
 })
 
 describe('incidentRiskLabel', () => {

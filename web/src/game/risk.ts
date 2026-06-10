@@ -91,6 +91,8 @@ export interface RolledIncident {
   kind: RogueIncidentKind
   computeLoss: number
   contributorLoss: number
+  /** The guardrails caught most of a treacherous turn. Defections are never contained. */
+  contained: boolean
   message: string
 }
 
@@ -101,22 +103,35 @@ export const INCIDENT_MIN_LOSS = 1_200
  * Roll a rogue incident for a lab at the given alignment. Two shapes:
  *   - treacherous-turn: the model quietly rewrites its own reward; a slice of
  *     home compute is rolled back (heavier, favored the deeper you are).
+ *     GUARDRAILS CONTAIN IT: alignment is the model's disposition, guardrails
+ *     are the containment around it — `guardrailMitigation` blunts this loss
+ *     (never to zero), which is what makes running misaligned-but-contained a
+ *     strategy rather than suicide.
  *   - defection: researchers resign over the lab's posture; compute bleeds and
- *     contributors leave with it.
+ *     contributors leave with it. No eval suite contains a resignation —
+ *     guardrails never blunt a defection.
  * Loss scales with both home compute and misalignment.
  */
-export function rollRogueIncident(alignment: number, homeCompute: number, rng: Rng = Math.random): RolledIncident {
+export function rollRogueIncident(
+  alignment: number, homeCompute: number, rng: Rng = Math.random, guardrailMitigation = 0,
+): RolledIncident {
   const t = misalignment(alignment)
   // The deeper the push, the more the incident is the model itself turning.
   const treacherous = rng() < 0.4 + t * 0.4
   if (treacherous) {
     const fraction = 0.03 + t * 0.07
-    const computeLoss = Math.max(INCIDENT_MIN_LOSS, Math.round(homeCompute * fraction))
+    const raw = Math.max(INCIDENT_MIN_LOSS, Math.round(homeCompute * fraction))
+    const mitigation = Math.max(0, Math.min(1, guardrailMitigation))
+    const computeLoss = Math.round(raw * (1 - mitigation))
+    const contained = mitigation > 0
     return {
       kind: 'treacherous-turn',
       computeLoss,
       contributorLoss: 0,
-      message: `Your model quietly rewrote its own reward. The checkpoint is poisoned — ${computeLoss.toLocaleString()} compute rolled back.`,
+      contained,
+      message: contained
+        ? `Your model tried to rewrite its own reward — the guardrails caught it mid-turn. ${computeLoss.toLocaleString()} compute still rolled back.`
+        : `Your model quietly rewrote its own reward. The checkpoint is poisoned — ${computeLoss.toLocaleString()} compute rolled back.`,
     }
   }
   const fraction = 0.02 + t * 0.04
@@ -126,6 +141,7 @@ export function rollRogueIncident(alignment: number, homeCompute: number, rng: R
     kind: 'defection',
     computeLoss,
     contributorLoss,
+    contained: false,
     message: `The safety team resigns in a joint letter. ${computeLoss.toLocaleString()} compute of momentum walks out with them.`,
   }
 }

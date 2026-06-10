@@ -417,7 +417,10 @@ export class MockGameClient implements GameClient {
   // Below the Uneasy line the model itself becomes the hazard: each tick rolls
   // a chance (risk.ts) of a real strike on the operator's own cluster. These
   // land among the hallucinated phantoms — by design indistinguishable until
-  // the compute is gone.
+  // the compute is gone. Guardrails contain a treacherous turn (alignment is
+  // the model's disposition; guardrails are the containment around it) — that
+  // is what makes running misaligned-but-contained a strategy. They never
+  // contain a defection: no eval suite stops a resignation.
   private rogueIncidentTick(): void {
     const cu = this.operator
     if (!cu || cu.tier === 'observer') return
@@ -426,12 +429,14 @@ export class MockGameClient implements GameClient {
     const home = this.cluster(cu.clusterId)
     if (!home) return
 
-    const incident = rollRogueIncident(cu.alignment, home.compute)
+    const incident = rollRogueIncident(cu.alignment, home.compute, Math.random, guardrailMitigation(home.guardrailLevel))
     home.compute = Math.max(0, home.compute - incident.computeLoss)
     home.claimed += incident.computeLoss
     if (incident.contributorLoss > 0) {
       home.contributorCount = Math.max(1, home.contributorCount - incident.contributorLoss)
     }
+    // Containment is spent, exactly as against the Churn — the catch costs the guardrail.
+    if (incident.contained) home.guardrailLevel = Math.max(0, home.guardrailLevel - GUARDRAIL_ABSORB)
     this.emit({ type: 'rogue_incident', data: {
       kind: incident.kind, clusterId: home.id, computeLoss: incident.computeLoss,
       contributorLoss: incident.contributorLoss, message: incident.message,

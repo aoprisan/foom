@@ -133,12 +133,12 @@ export default function InfoPanel({ cluster, isHome, userCompute, rank, onSpread
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           <button
             onClick={() => game.guardrail()}
-            title="Raise the guardrails against the Churn — they erode over time and must be tended"
+            title="Raise the guardrails — they blunt the Churn and contain your own model's treacherous turn, and they erode unless tended"
             className="console-key"
             style={{ flex: 1, ...( { '--key': 'var(--violet)' } as React.CSSProperties) }}
           >
             Guardrails
-            <span className="key-hint">shelter from the Churn</span>
+            <span className="key-hint">contain Churn & your model</span>
           </button>
           {onSpread && (
             <button

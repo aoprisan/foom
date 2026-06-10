@@ -185,7 +185,12 @@ A single per-player scalar, `alignment` in `[0,100]` (100 = Aligned, 0 = Rogue).
     Uneasy line (≤ 55) every tick rolls a chance, rising to ~8.5%/tick at Rogue, of
     **the Optimizer's attention** — a treacherous-turn strike that rolls back your *own*
     cluster's compute — or **defection**: researchers resign and compute walks out with
-    contributors. Loss scales with misalignment and cluster size.
+    contributors. Loss scales with misalignment and cluster size. **Guardrails contain
+    the treacherous turn** (blunting the loss like the Churn, spending themselves on the
+    catch — never to zero): alignment is the model's *disposition*, guardrails the
+    *containment* around it, so running misaligned-but-contained is a real strategy with
+    a real tending tax. Guardrails never contain a defection — no eval suite stops a
+    resignation.
   - **Hallucinations:** the UI shows phantom strikes / incoming you can't distinguish from
     real ones — purely client-side dread, no state change. (1:1 with FHTAGN's hallucinated
     events — and on-theme to the letter.) The rogue incidents land *among* the phantoms;

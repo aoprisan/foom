@@ -118,8 +118,9 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
 
           <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 8, lineHeight: 1.4 }}>
             Misalignment pays: training and exploits scale up to ×3 as the meter falls. It also
-            turns: below the Uneasy line your own model starts striking your cluster — and phantom
-            strikes surface among the real ones that were never there at all.
+            turns: below the Uneasy line your own model starts striking your cluster — guardrails
+            contain the turn, never the defections — and phantom strikes surface among the real
+            ones that were never there at all.
           </div>
         </>
       )}
