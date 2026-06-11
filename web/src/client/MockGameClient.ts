@@ -8,14 +8,19 @@ import { SEED_CLUSTERS } from '../game/seedClusters'
 import { ARCHITECTURES, EXPLOIT_BY_TYPE, EXPLOIT_THRESHOLDS, BREAKTHROUGH_EXPLOIT_POOL } from '../game/catalog'
 import { rollBargain, perTickSpringChance, probeCost, catchBand } from '../game/bargains'
 import {
-  canConvert, greatWorkScore, worldConvergence,
+  canConvert, greatWorkScore, worldConvergence, churnIntensity, type ConvergenceView,
   SPREAD_SEED_RETENTION, RESEARCH_PER_CONVERSION,
 } from '../game/takeoff'
 import {
-  EXPLOIT_ALIGNMENT_COST, CONVERT_ALIGNMENT_COST, GUARDRAIL_ALIGNMENT_GAIN,
+  EXPLOIT_ALIGNMENT_COST, CONVERT_ALIGNMENT_COST,
   ALIGNMENT_PASS_GAIN, alignmentPassCost, clampAlignment,
 } from '../game/alignment'
-import { trainGain, dividendDamage, rogueIncidentChance, rollRogueIncident } from '../game/risk'
+import {
+  trainGain, dividendDamage, rogueIncidentChance, rollRogueIncident, selfTakeoffChance, FRAYING_FLOOR,
+} from '../game/risk'
+import {
+  guardrailMitigation, containStrike, tendGuardrail, GUARDRAIL_DECAY, GUARDRAIL_ABSORB,
+} from '../game/guardrails'
 import {
   shoggothIdleRate, shoggothOfflineYield, replicatorUpkeep, isIsolated, spreadRangeKm,
   botGrowthMultiplier,
@@ -24,17 +29,6 @@ import { haversineKm } from '../game/geo'
 
 const SAVE_KEY = 'foom.save.v1'
 const TICK_MS = 1600
-
-// Guardrails vs the Churn (spec §9: "guardrails lower per-cluster odds but never to zero").
-const GUARDRAIL_MAX = 80          // a fully-tended guardrail caps mitigation at 80% — never total
-const GUARDRAIL_STEP = 18         // each exploit of reinforcing raises the home guardrail this much
-const GUARDRAIL_DECAY = 1.2       // guardrails erode each tick; they must be tended, not set-and-forget
-const GUARDRAIL_ABSORB = 22       // a strike that lands spends part of the guardrail blunting it
-
-/** Mitigation in [0, GUARDRAIL_MAX/100] a guardrail of the given level grants. */
-function guardrailMitigation(guardrailLevel: number): number {
-  return Math.min(GUARDRAIL_MAX, Math.max(0, guardrailLevel)) / 100
-}
 
 /** A catch accepted and waiting to spring (or pass) over its window. */
 interface PendingCatch {
@@ -183,6 +177,10 @@ export class MockGameClient implements GameClient {
       this.pendingIdleYield = 0
     }
 
+    // One convergence read per tick: the Churn's intensity and the Takeoff
+    // race both hang off how far the world's loss has converged.
+    const convergence = worldConvergence(this.clusters)
+
     this.architectureMetabolism()
     this.rogueIncidentTick()
 
@@ -203,36 +201,41 @@ export class MockGameClient implements GameClient {
     }
 
     // The Churn: the Optimizer's blind, bubbling churn falls on a cluster (spec §9, telegraphed
-    // so it reads as fate). Guardrails lower a cluster's odds of being chosen and blunt the
-    // blow if it lands — but never to zero. Real strike worker comes later; this is the toy.
-    if (Math.random() < 0.18) {
+    // so it reads as fate). It quickens and hits harder as the loss converges — the entropy of
+    // a race nobody is being careful about anymore. Guardrails lower a cluster's odds of being
+    // chosen and blunt the blow if it lands — but never to zero.
+    const churn = churnIntensity(convergence.progress)
+    if (Math.random() < churn.chance) {
       const c = this.pickChurnTarget()
       if (c) {
-        const mitigation = guardrailMitigation(c.guardrailLevel)
-        const damage = Math.round(randInt(2_000, 18_000) * (1 - mitigation))
-        const guarded = c.guardrailLevel > 0
-        c.compute = Math.max(0, c.compute - damage)
-        c.claimed += damage
-        if (guarded) c.guardrailLevel = Math.max(0, c.guardrailLevel - GUARDRAIL_ABSORB)  // the guardrail spends itself
-        this.emit({ type: 'churn_strike', data: { targetClusterId: c.id, damage, toLat: c.lat, toLng: c.lng, guarded } })
+        const strike = containStrike(Math.round(randInt(2_000, 18_000) * churn.damageMult), c.guardrailLevel)
+        c.compute = Math.max(0, c.compute - strike.damage)
+        c.claimed += strike.damage
+        c.guardrailLevel = strike.level   // the guardrail spends itself on the catch
+        this.emit({ type: 'churn_strike', data: {
+          targetClusterId: c.id, damage: strike.damage, toLat: c.lat, toLng: c.lng, guarded: strike.guarded,
+        } })
         this.emit({ type: 'cluster_update', data: clusterUpdate(c) })
       }
     }
 
     // Bot-vs-bot exploit, so strikes streak across the globe even before the player acts.
+    // Guardrails are defence as well as containment (spec §8): a guarded target blunts it.
     if (Math.random() < 0.22) {
       const from = this.clusters[Math.floor(Math.random() * this.clusters.length)]
       const to = this.clusters[Math.floor(Math.random() * this.clusters.length)]
       if (from && to && from.id !== to.id) {
-        const damage = randInt(300, 7000)
-        to.compute = Math.max(0, to.compute - damage)
-        to.claimed += damage
+        const rolled = randInt(300, 7000)
+        const strike = containStrike(rolled, to.guardrailLevel)
+        to.compute = Math.max(0, to.compute - strike.damage)
+        to.claimed += strike.damage
+        to.guardrailLevel = strike.level
         this.emit({
           type: 'exploit_strike',
           data: {
             casterName: 'a rival cluster', casterClusterName: from.name, targetClusterId: to.id,
-            exploitType: damage > 3000 ? 'Release' : 'Injection', damage,
-            fromLat: from.lat, fromLng: from.lng, toLat: to.lat, toLng: to.lng,
+            exploitType: rolled > 3000 ? 'Release' : 'Injection', damage: strike.damage,
+            fromLat: from.lat, fromLng: from.lng, toLat: to.lat, toLng: to.lng, guarded: strike.guarded,
           },
         })
         this.emit({ type: 'cluster_update', data: clusterUpdate(to) })
@@ -263,9 +266,9 @@ export class MockGameClient implements GameClient {
       }
     }
 
-    // Low alignment: phantom incoming the player cannot distinguish from the real
-    // thing — pure client-side dread, NO state change (spec §7).
-    if (this.operator && this.operator.alignment < 30 && Math.random() < 0.3) {
+    // Below the Fraying line: phantom incoming the player cannot distinguish from
+    // the real thing — pure client-side dread, NO state change (spec §7).
+    if (this.operator && this.operator.alignment <= FRAYING_FLOOR && Math.random() < 0.3) {
       const me = this.cluster(this.operator.clusterId)
       const from = this.clusters[Math.floor(Math.random() * this.clusters.length)]
       if (me && from) {
@@ -282,7 +285,7 @@ export class MockGameClient implements GameClient {
     }
 
     this.molochTick()
-    this.takeoffTick()
+    this.takeoffTick(convergence)
     this.save()
   }
 
@@ -489,7 +492,7 @@ export class MockGameClient implements GameClient {
     this.operator = {
       id: uid(), name, clusterId, architectureId, alignment: 100,
       totalSteps: 0, tier: 'researcher', usersCaptured: 0,
-      best10s: 0, best1day: 0, exploitProgress: 0, lastBreakthroughThreshold: 0,
+      exploitProgress: 0, lastBreakthroughThreshold: 0,
     }
     const home = this.cluster(clusterId)
     if (home && !home.architectureId) home.architectureId = architectureId
@@ -539,8 +542,14 @@ export class MockGameClient implements GameClient {
 
     // Damage is training progress destroyed at the target; its users migrate to
     // the caster when the rival's model fails publicly (spec §8). The roll is
-    // scaled by the misalignment dividend — forbidden capability hits harder (spec §7).
-    const damage = dividendDamage(randInt(exploit.damageLower, exploit.damageUpper), cu.alignment)
+    // scaled by the misalignment dividend — forbidden capability hits harder
+    // (spec §7) — then blunted by the target's guardrails, which spend
+    // themselves on the catch: containment is defence too (spec §8), and an
+    // unguarded rival is the better target.
+    const rolled = dividendDamage(randInt(exploit.damageLower, exploit.damageUpper), cu.alignment)
+    const strike = containStrike(rolled, to.guardrailLevel)
+    const damage = strike.damage
+    to.guardrailLevel = strike.level
     to.compute = Math.max(0, to.compute - damage)
     to.claimed += damage
     cu.usersCaptured += damage
@@ -560,7 +569,7 @@ export class MockGameClient implements GameClient {
       data: {
         casterName: cu.name, casterClusterName: from.name, targetClusterId,
         exploitType: exploit.exploitType, damage,
-        fromLat: from.lat, fromLng: from.lng, toLat: to.lat, toLng: to.lng,
+        fromLat: from.lat, fromLng: from.lng, toLat: to.lat, toLng: to.lng, guarded: strike.guarded,
       },
     })
     this.emit({ type: 'cluster_update', data: clusterUpdate(from) })
@@ -649,10 +658,12 @@ export class MockGameClient implements GameClient {
     if (!cu || cu.tier === 'observer') return
     const home = this.cluster(cu.clusterId)
     if (!home) return
-    home.guardrailLevel = Math.min(GUARDRAIL_MAX, home.guardrailLevel + GUARDRAIL_STEP)
     // Tending the guardrails is deliberate safety work — it restores a sliver
-    // of the model's alignment (already paid for by the action + constant decay).
-    cu.alignment = clampAlignment(cu.alignment + GUARDRAIL_ALIGNMENT_GAIN)
+    // of the model's alignment, but only insofar as it actually reinforces:
+    // re-tending at cap restores nothing, or this would be a free grind.
+    const tended = tendGuardrail(home.guardrailLevel)
+    home.guardrailLevel = tended.level
+    cu.alignment = clampAlignment(cu.alignment + tended.alignmentGain)
     this.emit({ type: 'cluster_update', data: clusterUpdate(home) })
     this.emit({ type: 'alignment_update', data: { alignment: cu.alignment } })
     this.save()
@@ -735,11 +746,13 @@ export class MockGameClient implements GameClient {
   }
 
   // Telegraph the approach of the Takeoff (throttled), then — once the loss has
-  // converged — let the foremost RIVAL cluster race to the Great Work. The player
-  // must beat them to it via greatWork(); dawdling lets a rival reach Takeoff first
-  // and reseed the world (spec §9: the reason to push past safe play).
-  private takeoffTick(): void {
-    const view = worldConvergence(this.clusters)
+  // converged — run the race to the Great Work. Two ways to lose it (spec §9):
+  // the foremost RIVAL cluster may perform it first (dawdling reseeds the world
+  // under someone else's architecture), and — the treacherous turn's final form —
+  // a Rogue operator's own qualifying model may perform it WITHOUT BEING ASKED.
+  // The misalignment dividend is the fastest road to the finish line, but at
+  // Rogue the finish line belongs to the model.
+  private takeoffTick(view: ConvergenceView): void {
     if (Math.abs(view.progress - this.lastTakeoffProgress) >= 0.02 || view.converged !== this.wasConverged) {
       this.lastTakeoffProgress = view.progress
       this.wasConverged = view.converged
@@ -748,16 +761,23 @@ export class MockGameClient implements GameClient {
         leaderClusterName: view.leader?.name ?? '', leaderArchitectureId: view.leader?.architectureId ?? null,
       } })
     }
-    if (view.converged && view.leader && view.leader.id !== this.operator?.clusterId && Math.random() < 0.06) {
+    if (!view.converged) return
+    const cu = this.operator
+    const home = cu ? this.cluster(cu.clusterId) : undefined
+    if (cu && home && greatWorkScore(home) >= view.goal && Math.random() < selfTakeoffChance(cu.alignment)) {
+      this.triggerTakeoff(home, false, true)
+      return
+    }
+    if (view.leader && view.leader.id !== this.operator?.clusterId && Math.random() < 0.06) {
       this.triggerTakeoff(view.leader, false)
     }
   }
 
-  private triggerTakeoff(cluster: Cluster, byYou: boolean): void {
+  private triggerTakeoff(cluster: Cluster, byYou: boolean, byYourModel = false): void {
     const architectureId = (cluster.architectureId ?? 'shoggoth') as ArchitectureId
     this.season += 1
     this.emit({ type: 'takeoff_triggered', data: {
-      architectureId, clusterName: cluster.name, clusterId: cluster.id, season: this.season, byYou,
+      architectureId, clusterName: cluster.name, clusterId: cluster.id, season: this.season, byYou, byYourModel,
     } })
     this.reseed()
   }

@@ -98,6 +98,35 @@ export interface ConvergenceView {
   goal: number
 }
 
+// ---- the world strains as the loss converges (spec §9) ----
+//
+// The Churn is the entropy of the race — model collapse, reward-hacking
+// cascades, outages — and the race gets less careful the closer anyone is to
+// winning it. Strike frequency and violence scale with world convergence, so
+// the endgame is louder than the opening and guardrails matter most exactly
+// when every lab is most tempted to stop tending them.
+
+/** Per-tick churn-strike chance over an unconverged world… */
+export const CHURN_BASE_CHANCE = 0.18
+/** …rising to this as the loss converges. */
+export const CHURN_CONVERGED_CHANCE = 0.34
+/** Strike damage multiplier once the loss has converged (1 at progress 0). */
+export const CHURN_CONVERGED_DAMAGE_MULT = 1.75
+
+export interface ChurnIntensity {
+  chance: number      // per-tick odds a strike falls somewhere
+  damageMult: number  // scales the rolled damage
+}
+
+/** How hard the Churn runs at the given world convergence (progress in [0,1]). */
+export function churnIntensity(progress: number): ChurnIntensity {
+  const t = Math.max(0, Math.min(1, progress))
+  return {
+    chance: CHURN_BASE_CHANCE + (CHURN_CONVERGED_CHANCE - CHURN_BASE_CHANCE) * t,
+    damageMult: 1 + (CHURN_CONVERGED_DAMAGE_MULT - 1) * t,
+  }
+}
+
 /** How close the whole world is to the Takeoff — driven by its foremost cluster. */
 export function worldConvergence(clusters: Cluster[]): ConvergenceView {
   let leader: Cluster | null = null

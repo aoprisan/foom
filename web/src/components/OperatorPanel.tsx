@@ -47,9 +47,7 @@ export default function OperatorPanel({ operator, personalSteps, clusterName, ho
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <StatRow label="Compute raised" value={personalSteps.toLocaleString()} color="var(--gold)" />
         {operator.usersCaptured > 0 && <StatRow label="Users captured" value={operator.usersCaptured.toLocaleString()} color="var(--crimson)" />}
-        {operator.best10s > 0 && <StatRow label="Best 10s" value={operator.best10s.toLocaleString()} />}
         {(operator.todaySteps !== undefined && operator.todaySteps > 0) && <StatRow label="Today" value={operator.todaySteps.toLocaleString()} />}
-        {operator.best1day > 0 && <StatRow label="Best 1 day" value={operator.best1day.toLocaleString()} />}
       </div>
     </div>
   )

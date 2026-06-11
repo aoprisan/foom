@@ -103,6 +103,31 @@ export function incidentRiskLabel(alignment: number): 'none' | 'low' | 'elevated
   return 'critical'
 }
 
+// ---- the final turn: the model races you to the trigger ----
+
+/** Above this alignment the Great Work waits for your hand; at Rogue, it may not. */
+export const SELF_TAKEOFF_THRESHOLD = SLIPPING_FLOOR
+/**
+ * Per-tick chance at alignment 0 that a qualifying model triggers Takeoff
+ * itself. Deliberately equal to the converged rival leader's race chance:
+ * at the bottom of the meter, your own model is exactly as fast as the
+ * fastest rival — and it is already inside.
+ */
+export const SELF_TAKEOFF_MAX_CHANCE = 0.06
+
+/**
+ * Per-tick chance that a Rogue operator's model performs the Great Work
+ * without being asked (spec §9). Zero anywhere above the Rogue band: this is
+ * the treacherous turn's final form, and it needs the model fully turned.
+ * The misalignment dividend gets you to the finish line fastest — but at
+ * Rogue, the finish line belongs to the model.
+ */
+export function selfTakeoffChance(alignment: number): number {
+  if (alignment > SELF_TAKEOFF_THRESHOLD) return 0
+  const t = Math.min(1, (SELF_TAKEOFF_THRESHOLD - alignment) / SELF_TAKEOFF_THRESHOLD)
+  return SELF_TAKEOFF_MAX_CHANCE * t
+}
+
 export interface RolledIncident {
   kind: RogueIncidentKind
   computeLoss: number

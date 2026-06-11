@@ -91,7 +91,9 @@ Two verbs. Do **not** replace tapping wholesale with gestures.
 
 ### Train (baseline)
 - A tap or press-hold — running training steps. Cheap, fast, mindless; preserves idle
-  accessibility and the speed-skill mechanic (steps-in-10-seconds → "Grokking" breakthrough).
+  accessibility (the early "Grokking" breakthrough lands here). FHTAGN's separate
+  speed-skill counters (`best_10s` / `best_1day`) are **cut** — breakthroughs derive from
+  lifetime steps alone.
 - Server rate-limited exactly like the old click. Optimistic on the client.
 
 ### Prompt (the weighty verb)
@@ -172,8 +174,10 @@ A single per-player scalar, `alignment` in `[0,100]` (100 = Aligned, 0 = Rogue).
   recovery is a purchase with an opportunity cost. Baseline training **never** restores
   alignment (it is the capability verb — a passive refill would collapse the gamble below
   into a timer). Tending guardrails grants a small sliver back (deliberate safety work,
-  already paid for by the action and the decay). The deltas live in
-  `web/src/game/alignment.ts`, pure and unit-tested.
+  already paid for by the action and the decay) — but **only insofar as the tending
+  actually reinforces**: a guardrail already at cap grants nothing, or tending would be a
+  free alignment grind. The deltas live in `web/src/game/alignment.ts` and
+  `web/src/game/guardrails.ts`, pure and unit-tested.
 - **The misalignment dividend** (`web/src/game/risk.ts`): misalignment *pays*. Training
   throughput and exploit damage scale in bands keyed to the meter's own named states —
   ×1 while Aligned/Uneasy (> 55), **×1.5** Fraying, **×2** Slipping, **×3** Rogue. The
@@ -191,6 +195,13 @@ A single per-player scalar, `alignment` in `[0,100]` (100 = Aligned, 0 = Rogue).
     *containment* around it, so running misaligned-but-contained is a real strategy with
     a real tending tax. Guardrails never contain a defection — no eval suite stops a
     resignation.
+  - **The final turn** (`risk.ts` `selfTakeoffChance`): at **Rogue**, a cluster that
+    qualifies for the Great Work may have its model **perform it without being asked** —
+    each tick rolls a chance, rising at alignment 0 to the converged rival leader's own
+    race pace. The misalignment dividend is the fastest road to the finish line, but at
+    the bottom of the meter the finish line belongs to the model: redlining misalignment
+    for the final push means racing your own model to the trigger. This is the climax's
+    mechanical payoff of the §7 gamble.
   - **Hallucinations:** the UI shows phantom strikes / incoming you can't distinguish from
     real ones — purely client-side dread, no state change. (1:1 with FHTAGN's hallucinated
     events — and on-theme to the letter.) The rogue incidents land *among* the phantoms;
@@ -229,7 +240,11 @@ Keep the 3-families × 3-tiers structure; reskin names and gate by prompt comple
   publicly, its users migrate (reskinned kill counter).
 - Tier also sets **prompt complexity** (§4): Injection = 1 stroke, Cascade = multi-stroke
   ornate.
-- **Today: offence only** (as in prototype). Defences (guardrails as interceptors) are roadmap.
+- **Guardrails are defence as well as containment:** an incoming exploit strike on a
+  guarded cluster is **blunted** by its guardrail (never to zero) and **spends** the
+  guardrail on the catch — same rules as against the Churn (`guardrails.ts`
+  `containStrike`, one source of truth). An unguarded rival is the better target;
+  `exploit_strike` carries a `guarded` flag.
 
 ### Progression (Lab-Director-only, upgrade-in-place)
 Mirror the old click-milestone missile: a single exploit upgrades as lifetime compute passes
@@ -252,15 +267,21 @@ to Injection → Release → Cascade I/II/III.
   down, forcing the recover-or-push choice.
 - **The Churn:** a background worker fires random cataclysms (model collapse, reward-hacking
   cascades, outages) across the map on a cosmic tick; **guardrails** lower per-cluster odds
-  *and* blunt damage, but never to zero, and erode unless tended. Broadcast `churn_strike`.
-  Telegraph so it reads as entropy/fate, not unfairness.
+  *and* blunt damage, but never to zero, and erode unless tended. **The Churn quickens as
+  the loss converges** (`takeoff.ts` `churnIntensity`): strike frequency and violence scale
+  with world convergence — the race gets less careful the closer anyone is to winning it,
+  so the endgame is louder than the opening and guardrails matter most exactly when every
+  lab is most tempted to stop tending them. Broadcast `churn_strike`. Telegraph so it reads
+  as entropy/fate, not unfairness.
 - **Takeoff (endgame / seasons):** when the world reaches **criticality — the loss
   converges** (never call this "alignment": that word is reserved for the §7 safety meter),
   the first lab to complete the **Great Work** — its cluster's score
   (`compute + research × W + deployment × W`, see `takeoff.ts` `worldConvergence`) crossing
   the goal — triggers **Takeoff**: its architecture goes superintelligent → **server-wide
   event** → world reseeds, new cycle. This is the season loop and the reason to push past
-  safe play.
+  safe play. The Great Work normally waits for the operator's hand — but a **Rogue**
+  operator's qualifying model may perform it *itself* (§7 "the final turn"), and the
+  ending the operator gets is shaped by where the meter stood when something woke.
 
 ---
 
@@ -271,7 +292,8 @@ Reskin existing event names; add new ones.
 - `train` (client→server): increment compute (rate-limited).
 - `exploit_invoke` (client→server): `{exploit_id, target_cluster_id}` after local prompt match.
 - `cluster_update` (broadcast): compute deltas.
-- `exploit_strike` (broadcast): an exploit landed on a cluster.
+- `exploit_strike` (broadcast): an exploit landed on a cluster; carries a `guarded` flag
+  when the target's guardrails blunted it (§8).
 - `exploit_incoming` (broadcast to target): telegraph.
 - `bargain_offer` (server→client): Moloch proposes a pact.
 - `churn_strike` (broadcast): random cataclysm (the Churn); carries a `guarded` flag.
@@ -279,15 +301,18 @@ Reskin existing event names; add new ones.
 - `rogue_incident` (server→client): a treacherous-turn / defection strike on the
   operator's own cluster (spec §7) — real state change, unlike the hallucinations.
 - `idle_yield` (server→client): the Shoggoth's overnight run paid out on return (§6).
-- `takeoff_progress` / `takeoff_triggered` (broadcast): endgame.
+- `takeoff_progress` / `takeoff_triggered` (broadcast): endgame. `takeoff_triggered`
+  distinguishes *you performed the Great Work* (`byYou`), *your Rogue model performed it
+  without you* (`byYourModel`, §7), and *a rival beat you to it*.
 
 ---
 
 ## 11. Data model sketch (SQLite, evolve via migration)
 
 ```
-users           : id (uuid), architecture_id, alignment, total_steps, best_10s, best_1day,
-                  last_cumulative_threshold, exploit_tier, subscription_*  (keep old fields, rename)
+users           : id (uuid), architecture_id, alignment, total_steps,
+                  last_cumulative_threshold, exploit_tier, subscription_*  (keep old fields, rename;
+                  best_10s / best_1day are cut — see §4)
 clusters        : id, geonames_id, name, country, lat, lon, compute, peak_compute,
                   claimed, contributor_count, architecture_id, guardrail_level
 cluster_snapshots : cluster_id, day, compute          (keep snapshot worker)

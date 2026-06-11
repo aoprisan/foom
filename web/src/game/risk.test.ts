@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
   capabilityDividend, trainGain, dividendDamage,
-  rogueIncidentChance, rollRogueIncident, incidentRiskLabel,
+  rogueIncidentChance, rollRogueIncident, incidentRiskLabel, selfTakeoffChance,
   INCIDENT_THRESHOLD, INCIDENT_MAX_CHANCE, INCIDENT_MIN_LOSS, DIVIDEND_BANDS,
-  ALIGNMENT_STATES,
+  ALIGNMENT_STATES, SELF_TAKEOFF_THRESHOLD, SELF_TAKEOFF_MAX_CHANCE, SLIPPING_FLOOR,
 } from './risk'
 
 // A deterministic RNG, mirroring bargains.test.ts.
@@ -150,6 +150,32 @@ describe('rollRogueIncident', () => {
     expect(guarded.contained).toBe(false)
     expect(guarded.computeLoss).toBe(bare.computeLoss)
     expect(guarded.contributorLoss).toBe(bare.contributorLoss)
+  })
+})
+
+describe('selfTakeoffChance (spec §9: at Rogue, the finish line belongs to the model)', () => {
+  it('keys off the Rogue floor — the gauge the player reads is the line that fires', () => {
+    expect(SELF_TAKEOFF_THRESHOLD).toBe(SLIPPING_FLOOR)
+  })
+
+  it('never fires above the Rogue band — the Great Work waits for your hand', () => {
+    for (let a = SELF_TAKEOFF_THRESHOLD + 1; a <= 100; a += 1) {
+      expect(selfTakeoffChance(a)).toBe(0)
+    }
+  })
+
+  it('rises monotonically as the model turns', () => {
+    let prev = 0
+    for (let a = SELF_TAKEOFF_THRESHOLD; a >= 0; a--) {
+      const c = selfTakeoffChance(a)
+      expect(c).toBeGreaterThanOrEqual(prev)
+      prev = c
+    }
+  })
+
+  it('matches the rival leader’s race pace at the bottom of the meter', () => {
+    expect(selfTakeoffChance(0)).toBe(SELF_TAKEOFF_MAX_CHANCE)
+    expect(selfTakeoffChance(-10)).toBe(SELF_TAKEOFF_MAX_CHANCE)
   })
 })
 

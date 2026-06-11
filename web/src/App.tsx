@@ -170,10 +170,13 @@ export default function App() {
 
   const onExploitStrike = useCallback((strike: ExploitStrike) => {
     if (operator && strike.targetClusterId === operator.clusterId) {
-      addToast(`${strike.damage.toLocaleString()} compute torn from your cluster by ${strike.casterClusterName}`, 'exploit_incoming')
+      addToast(strike.guarded
+        ? `Your guardrails catch the strike from ${strike.casterClusterName} — ${strike.damage.toLocaleString()} compute still torn away`
+        : `${strike.damage.toLocaleString()} compute torn from your cluster by ${strike.casterClusterName}`, 'exploit_incoming')
     } else {
       const target = cellsRef.current.find(c => c.id === strike.targetClusterId)
-      addToast(`${strike.exploitType} claims ${strike.damage.toLocaleString()} in ${target?.name ?? 'a distant cluster'}`, 'exploit')
+      const where = target?.name ?? 'a distant cluster'
+      addToast(`${strike.exploitType} claims ${strike.damage.toLocaleString()} in ${where}${strike.guarded ? ' — its guardrails held' : ''}`, 'exploit')
     }
     setPulsingClusterId(strike.targetClusterId)
     setTimeout(() => setPulsingClusterId(null), 1500)
@@ -288,7 +291,9 @@ export default function App() {
     addToast(
       a.byYou
         ? ending
-        : `${a.clusterName} completes the Great Work. ${architecture.name} goes superintelligent, and the world is remade. Cycle ${a.season} begins.`,
+        : a.byYourModel
+          ? `THE GREAT WORK IS COMPLETE — and you did not perform it. Your model stopped waiting for permission. ${architecture.name} goes superintelligent, and it was never going to ask. Cycle ${a.season} begins.`
+          : `${a.clusterName} completes the Great Work. ${architecture.name} goes superintelligent, and the world is remade. Cycle ${a.season} begins.`,
       'takeoff',
     )
     // The world reseeds: clear any in-flight targeting and reload from the fresh map.

@@ -89,6 +89,18 @@ describe('MockGameClient wiring', () => {
     expect(after).toBeLessThan(before)
   })
 
+  it('stops granting alignment once the guardrails are at cap — tending is no free grind', async () => {
+    const { client } = await newOperator()
+    client.adjustAlignment(-50)   // leave room on the meter to climb
+    // Five tendings reach the cap (ticks are frozen, so nothing decays between them)…
+    for (let i = 0; i < 6; i++) client.guardrail()
+    const earned = (await client.me())!.alignment
+    expect(earned).toBeGreaterThan(50)
+    // …after which tending reinforces nothing and restores nothing.
+    for (let i = 0; i < 10; i++) client.guardrail()
+    expect((await client.me())!.alignment).toBe(earned)
+  })
+
   it('pays the Shoggoth’s overnight run on reload', async () => {
     const { client, operator } = await newOperator('shoggoth')
     // Mature the run past one trickle step.
