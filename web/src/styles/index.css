@@ -257,6 +257,32 @@ body::after {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
+/* ── Rules button — the how-to-play door, parked under the wordmark ────────── */
+.rules-btn {
+  position: absolute;
+  top: 72px;
+  left: 24px;
+  z-index: 12;
+  padding: 5px 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--teal) 32%, transparent);
+  border-radius: 0;
+  cursor: pointer;
+  transition: box-shadow 0.16s ease, background 0.16s ease, transform 0.06s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.rules-btn:hover {
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+  box-shadow: 0 0 18px -6px var(--teal);
+}
+.rules-btn:active { transform: translateY(1px); }
 /* legacy keyframe kept — the App loading screen flickers like a cold tube */
 @keyframes flicker {
   0%, 100% { opacity: 1; }
@@ -470,6 +496,7 @@ button:active { filter: brightness(0.92); }
   /* Header band: wordmark left, world compute right */
   .logo { top: 14px; left: 14px; font-size: 26px; letter-spacing: 4px; }
   .logo::after { width: 7px; height: 13px; right: -11px; top: 11px; }
+  .rules-btn { top: 58px; left: 14px; padding: 4px 9px; font-size: 9px; }
 
   .global-counter {
     position: absolute !important;
@@ -736,6 +763,19 @@ button:active { filter: brightness(0.92); }
   font-size: 14px;
 }
 
+/* The update prompt borrows the install plate; its rune is a glyph, not an icon. */
+.vigil-update__rune {
+  flex: 0 0 auto;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--teal-bright);
+  text-shadow: 0 0 12px rgba(180, 240, 78, 0.55);
+  animation: vigil-spin 6s linear infinite;
+}
+@keyframes vigil-spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 480px) {
   .vigil-install { gap: 11px; padding: 12px 13px; }
   .vigil-install__prompt { width: 36px; height: 36px; }
@@ -746,5 +786,6 @@ button:active { filter: brightness(0.92); }
 @media (prefers-reduced-motion: reduce) {
   .vigil-install, .vigil-offline { animation: none; }
   .vigil-install__prompt { animation: none; }
+  .vigil-update__rune { animation: none; }
   .logo::after { animation: none; }
 }

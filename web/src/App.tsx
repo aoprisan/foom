@@ -16,6 +16,7 @@ import AlignmentMeter from './components/AlignmentMeter'
 import MolochCard from './components/MolochCard'
 import TakeoffPanel from './components/TakeoffPanel'
 import StoryPanel from './components/StoryPanel'
+import RulesPanel from './components/RulesPanel'
 import PwaPrompts from './components/PwaPrompts'
 import { game } from './client'
 import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
@@ -73,6 +74,7 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [showStory, setShowStory] = useState(false)
+  const [showRules, setShowRules] = useState(false)
   const hallucinateTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const leaderboardTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const { toasts, addToast } = useToasts()
@@ -644,7 +646,16 @@ export default function App() {
         </span>
       </button>
 
+      <button
+        className="rules-btn"
+        onClick={() => setShowRules(true)}
+        title="How to play — the game rules"
+      >
+        ❖ Rules
+      </button>
+
       {showStory && <StoryPanel onClose={() => setShowStory(false)} />}
+      {showRules && <RulesPanel onClose={() => setShowRules(false)} />}
 
       <WorldPanel stats={worldStats} totalCompute={totalCompute} takeoff={takeoff} />
 
