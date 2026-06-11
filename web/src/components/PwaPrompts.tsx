@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useRegisterSW } from 'virtual:pwa-register/react'
+import type { PwaUpdate } from '../hooks/usePwaUpdate'
 
-// Owns every PWA-facing moment: service-worker registration (so the build runs
-// offline against the in-browser sim), the "offline ready" notice, and the
-// install invitation — Android/desktop via beforeinstallprompt, iOS via a hint
-// since Safari fires no such event. Themed to the Drowned Vigil.
+// Owns every PWA-facing moment: the "offline ready" notice, the "new build
+// deployed" update prompt, and the install invitation — Android/desktop via
+// beforeinstallprompt, iOS via a hint since Safari fires no such event. The
+// service-worker registration itself lives in usePwaUpdate (lifted to App so
+// the top-left "check for updates" control shares it); this component just
+// renders the prompts off that shared state. Themed to the Drowned Vigil.
 
 const DISMISS_KEY = 'foom.install.dismissed'
 const BASE = import.meta.env.BASE_URL
@@ -26,20 +28,15 @@ function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent)
 }
 
-export default function PwaPrompts() {
+interface PwaPromptsProps {
+  pwa: PwaUpdate
+}
+
+export default function PwaPrompts({ pwa }: PwaPromptsProps) {
+  const { offlineReady, setOfflineReady, needRefresh, setNeedRefresh, updateServiceWorker } = pwa
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
   const [iosHint, setIosHint] = useState(false)
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === '1')
-
-  const {
-    offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegisterError(err) {
-      console.warn('[foom] service worker registration failed', err)
-    },
-  })
 
   // Capture the install opportunity (Android/desktop), or fall back to the iOS hint.
   useEffect(() => {
