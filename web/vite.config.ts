@@ -12,8 +12,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // New SW takes over as soon as it's ready; the in-app prompt surfaces it.
-      registerType: 'autoUpdate',
+      // A new build waits rather than seizing control mid-run — the in-app
+      // Update prompt (<PwaPrompts>) lets the player reload on their terms,
+      // so a deploy never interrupts a session without consent.
+      registerType: 'prompt',
       // We own registration via virtual:pwa-register/react in <PwaPrompts>.
       injectRegister: null,
       // public/manifest.webmanifest is hand-authored and authoritative — don't

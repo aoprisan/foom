@@ -33,6 +33,8 @@ export default function PwaPrompts() {
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
   } = useRegisterSW({
     onRegisterError(err) {
       console.warn('[foom] service worker registration failed', err)
@@ -119,6 +121,24 @@ export default function PwaPrompts() {
             )}
             <button className="vigil-install__no" onClick={dismiss} aria-label="Dismiss">
               {deferred ? 'Not yet' : 'Dismiss'}
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {needRefresh && (
+        <aside className="vigil-install vigil-update" role="dialog" aria-label="Update FOOM">
+          <span className="vigil-update__rune" aria-hidden>↻</span>
+          <div className="vigil-install__body">
+            <h3>A new cycle is ready</h3>
+            <p>A fresh build of FOOM has been deployed. Reload to take it over — your run is saved.</p>
+          </div>
+          <div className="vigil-install__acts">
+            <button className="vigil-install__yes" onClick={() => updateServiceWorker(true)}>
+              Update
+            </button>
+            <button className="vigil-install__no" onClick={() => setNeedRefresh(false)} aria-label="Dismiss">
+              Later
             </button>
           </div>
         </aside>
