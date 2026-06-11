@@ -18,8 +18,6 @@ const operator: Operator = {
   totalSteps: 0,
   tier: 'researcher',
   usersCaptured: 0,
-  best10s: 0,
-  best1day: 0,
   exploitProgress: 0,
   lastBreakthroughThreshold: 0,
 }

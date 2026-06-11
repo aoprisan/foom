@@ -53,8 +53,6 @@ export interface Operator {
   totalSteps: number       // was totalClicks
   tier: Tier                // was role (spectator/builder/warrior)
   usersCaptured: number             // compute claimed from rivals (was totalKills)
-  best10s: number
-  best1day: number
   exploitProgress: number      // was clickMissileClicks
   lastBreakthroughThreshold: number  // was lastCumulativeThreshold
   todaySteps?: number
@@ -203,6 +201,7 @@ export interface ExploitStrike {
   fromLng: number
   toLat: number
   toLng: number
+  guarded?: boolean          // the target's guardrails blunted the strike (spec §8)
 }
 
 /** A strike of the Churn — the Optimizer's blind, bubbling churn falling on a cluster (spec §9). */
@@ -264,6 +263,7 @@ export interface TakeoffTriggered {
   clusterId: string
   season: number            // the new cycle just begun
   byYou: boolean            // you triggered your Takeoff, or a rival beat you to it
+  byYourModel: boolean      // your Rogue model performed the Great Work without you (spec §9)
 }
 
 /** Snapshot of the endgame, read on demand for the Takeoff UI. */

@@ -217,3 +217,40 @@ playtesting per spec §16.
 5. **Spec reconciliation:** fold all accepted changes back into `FOOM_Game_Spec.md`
    (spec is source of truth per CLAUDE.md) — §7 alignment economy, §8 range fiction,
    §9 criticality wording, file-name pointers.
+
+---
+
+## 7. Round 2 — paying the meter off at the climax (implemented)
+
+The first round made the alignment gamble real *during* play. What remained: the
+climax didn't mechanically care about the meter (a Rogue lab finished the Great Work
+exactly as safely as an Aligned one — only the toast copy differed), guardrails had
+become load-bearing in three systems while their rules sat inside the client, and two
+inherited counters were dead weight. Changes, all implemented with unit tests and
+reconciled into the spec:
+
+- **The final turn** (`risk.ts` `selfTakeoffChance`, spec §7/§9): at Rogue, a cluster
+  that qualifies for the Great Work may have its model perform it **without being
+  asked** — per-tick chance rising at alignment 0 to the converged rival leader's own
+  race pace. The misalignment dividend is the fastest road to the finish line; at the
+  bottom of the meter, the finish line belongs to the model. This turns the endgame
+  into the game's sharpest version of its own central question.
+- **The Churn quickens as the loss converges** (`takeoff.ts` `churnIntensity`, spec
+  §9): strike frequency and violence scale with world convergence — the entropy of a
+  race nobody is being careful about anymore. The endgame is louder than the opening,
+  and guardrails matter most exactly when labs are most tempted to stop tending them.
+- **Guardrails become full containment** (`guardrails.ts`, new pure module; spec §8):
+  the same `containStrike` rules now blunt the Churn, a treacherous turn, *and*
+  incoming rival exploits (the spec's "defences are roadmap" delivered) — blunted
+  never to zero, and the guardrail spends itself on every catch. An unguarded rival
+  is the better target; `exploit_strike` carries a `guarded` flag.
+- **Closed the free-alignment grind** (spec §7): tending guardrails restored +1.5
+  alignment unconditionally — including at the cap, where it reinforced nothing — a
+  zero-cost loop that violated the design's own #1 rule ("a gamble, not a timer to
+  optimise"). The sliver now scales with the reinforcement actually applied; at cap
+  it grants nothing.
+- **Dropped dead counters:** `best10s` / `best1day` were never written, never
+  rendered, and the FHTAGN speed-skill mechanic they served was never carried over
+  ("Grokking" derives from lifetime steps). Cut from `Operator`, the panel, and the
+  spec's data model. The hallucination threshold also now derives from the shared
+  `FRAYING_FLOOR` instead of a hardcoded copy of it.

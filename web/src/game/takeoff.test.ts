@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  canConvert, greatWorkScore, worldConvergence, spreadCost,
+  canConvert, greatWorkScore, worldConvergence, spreadCost, churnIntensity,
   SPREAD_RANGE_KM, GREAT_WORK_GOAL, RESEARCH_WEIGHT, DEPLOYMENT_WEIGHT,
+  CHURN_BASE_CHANCE, CHURN_CONVERGED_CHANCE, CHURN_CONVERGED_DAMAGE_MULT,
 } from './takeoff'
 import type { Cluster, ArchitectureId } from '../types'
 
@@ -118,5 +119,32 @@ describe('worldConvergence', () => {
     expect(v.leader).toBeNull()
     expect(v.progress).toBe(0)
     expect(v.converged).toBe(false)
+  })
+})
+
+describe('churnIntensity (spec §9: the Churn quickens as the loss converges)', () => {
+  it('runs at the base rate over an unconverged world', () => {
+    expect(churnIntensity(0)).toEqual({ chance: CHURN_BASE_CHANCE, damageMult: 1 })
+  })
+
+  it('peaks once the loss has converged', () => {
+    expect(churnIntensity(1)).toEqual({
+      chance: CHURN_CONVERGED_CHANCE, damageMult: CHURN_CONVERGED_DAMAGE_MULT,
+    })
+  })
+
+  it('rises monotonically with convergence', () => {
+    let prev = churnIntensity(0)
+    for (let p = 0; p <= 1; p += 0.05) {
+      const i = churnIntensity(p)
+      expect(i.chance).toBeGreaterThanOrEqual(prev.chance)
+      expect(i.damageMult).toBeGreaterThanOrEqual(prev.damageMult)
+      prev = i
+    }
+  })
+
+  it('clamps out-of-range progress', () => {
+    expect(churnIntensity(-1)).toEqual(churnIntensity(0))
+    expect(churnIntensity(2)).toEqual(churnIntensity(1))
   })
 })

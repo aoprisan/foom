@@ -24,7 +24,12 @@ export const EXPLOIT_ALIGNMENT_COST: Record<1 | 2 | 3, number> = { 1: 3, 2: 7, 3
 /** Spreading to another cluster is the race itself — it costs alignment (spec §7, §9). */
 export const CONVERT_ALIGNMENT_COST = 2
 
-/** Tending the guardrails is deliberate safety work — a small restoration. */
+/**
+ * Tending the guardrails is deliberate safety work — a small restoration,
+ * granted only insofar as the tending actually reinforces (guardrails.ts
+ * tendGuardrail): a guardrail already at cap restores nothing, or tending
+ * would be a free alignment grind.
+ */
 export const GUARDRAIL_ALIGNMENT_GAIN = 1.5
 
 /** What one alignment pass restores. */
