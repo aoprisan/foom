@@ -49,3 +49,12 @@ export function canRunAlignmentPass(homeCompute: number): boolean {
 export function clampAlignment(a: number): number {
   return Math.max(0, Math.min(100, a))
 }
+
+/**
+ * 0 while fully aligned, 1 at the brink — how far capability has been pushed.
+ * The shared normalization behind bargain scaling (bargains.ts) and incident
+ * scaling (risk.ts); one curve, so a balance tweak moves both together.
+ */
+export function misalignment01(alignment: number): number {
+  return Math.max(0, Math.min(1, (100 - alignment) / 100))
+}

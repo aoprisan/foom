@@ -19,7 +19,9 @@ import StoryPanel from './components/StoryPanel'
 import PwaPrompts from './components/PwaPrompts'
 import { game } from './client'
 import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
-import { canConvert, SPREAD_RANGE_KM } from './game/takeoff'
+import { canConvert } from './game/takeoff'
+import { isIsolated, spreadRangeKm } from './game/architectures'
+import { trainGain, UNEASY_FLOOR, SLIPPING_FLOOR } from './game/risk'
 import { haversineKm } from './game/geo'
 import { EXPLOIT_ALIGNMENT_COST, clampAlignment } from './game/alignment'
 import { useGameClient } from './hooks/useGameClient'
@@ -27,7 +29,7 @@ import { useTrainHandler } from './hooks/useTrainHandler'
 import type {
   Cluster, Operator, ClusterUpdate, ExploitStrike, ChurnStrike,
   BreakthroughEarned, WorldStats, Exploit, Bargain, BargainSprung,
-  ClusterConverted, TakeoffState, TakeoffTriggered,
+  ClusterConverted, TakeoffState, TakeoffTriggered, RogueIncident, IdleYield,
 } from './types'
 
 const LEADERBOARD_REFRESH_MS = 3000
@@ -153,6 +155,19 @@ export default function App() {
   const cellsRef = useRef(clusters)
   cellsRef.current = clusters
 
+  // Isolation is pure geography: ids and coordinates never change across a
+  // season (reseed reuses the same seed cities), so the air-gapped set is
+  // computed exactly once instead of O(n²) on every cluster_update.
+  const isolatedIdsRef = useRef<Set<string> | null>(null)
+  const isolatedIds = useCallback((list: Cluster[]): Set<string> => {
+    if (!isolatedIdsRef.current && list.length > 0) {
+      const ids = new Set<string>()
+      for (const c of list) if (isIsolated(c, list)) ids.add(c.id)
+      isolatedIdsRef.current = ids
+    }
+    return isolatedIdsRef.current ?? new Set()
+  }, [])
+
   const onExploitStrike = useCallback((strike: ExploitStrike) => {
     if (operator && strike.targetClusterId === operator.clusterId) {
       addToast(`${strike.damage.toLocaleString()} compute torn from your cluster by ${strike.casterClusterName}`, 'exploit_incoming')
@@ -208,6 +223,19 @@ export default function App() {
 
   useEffect(() => () => clearTimeout(hallucinateTimer.current), [])
 
+  // A rogue incident is the real thing the hallucinations imitate: the player's
+  // own model striking its own cluster. Toast + pulse, and the message carries
+  // the loss — unlike a phantom, the compute is actually gone.
+  const onRogueIncident = useCallback((i: RogueIncident) => {
+    addToast(i.message, 'exploit_incoming')
+    setPulsingClusterId(i.clusterId)
+    setTimeout(() => setPulsingClusterId(null), 1500)
+  }, [addToast])
+
+  const onIdleYield = useCallback((y: IdleYield) => {
+    addToast(`The Shoggoth trained while you were away — +${y.compute.toLocaleString()} compute at ${y.clusterName}.`, 'breakthrough')
+  }, [addToast])
+
   const onBargainOffer = useCallback((b: Bargain) => {
     setBargain(b)
     addToast('The race tightens. Moloch has found a pressure point.', 'bargain')
@@ -250,9 +278,16 @@ export default function App() {
 
   const onTakeoffTriggered = useCallback((a: TakeoffTriggered) => {
     const architecture = ARCHITECTURE_BY_ID[a.architectureId]
+    // The meter's final reading shapes what wakes (spec §7 payoff): the same
+    // victory reads as a controlled ascent, a gamble, or the thing you feared.
+    const ending = alignment > UNEASY_FLOOR
+      ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand — and, for one impossible moment, it listens. Cycle ${a.season} begins.`
+      : alignment > SLIPPING_FLOOR
+        ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand. You are no longer certain it is yours. Cycle ${a.season} begins.`
+        : `THE GREAT WORK IS COMPLETE. Something goes superintelligent at your hand — but what wakes is not what you trained. Cycle ${a.season} begins.`
     addToast(
       a.byYou
-        ? `THE GREAT WORK IS COMPLETE. ${architecture.name} goes superintelligent at your hand — the world unmakes. Cycle ${a.season} begins.`
+        ? ending
         : `${a.clusterName} completes the Great Work. ${architecture.name} goes superintelligent, and the world is remade. Cycle ${a.season} begins.`,
       'takeoff',
     )
@@ -262,12 +297,13 @@ export default function App() {
     clearTimeout(takeoffFlashTimer.current)
     takeoffFlashTimer.current = setTimeout(() => setTakeoffFlash(false), 1100)
     reloadWorld()
-  }, [addToast, reloadWorld])
+  }, [addToast, reloadWorld, alignment])
 
   useEffect(() => () => clearTimeout(takeoffFlashTimer.current), [])
 
   const { connectionState } = useGameClient({
     onClusterUpdate, onOperatorUpdate, onExploitStrike, onExploitIncoming, onChurn, onBreakthrough, onAlignment,
+    onRogueIncident, onIdleYield,
     onBargainOffer, onBargainSprung, onClusterConverted, onTakeoffProgress, onTakeoffTriggered,
   })
 
@@ -293,11 +329,23 @@ export default function App() {
     game.declineBargain(id)
   }, [])
 
+  // Interpretability probe: pay compute, read the catch's odds. The updated
+  // bargain (with its revealed band) replaces the standing card in place.
+  const handleProbeBargain = useCallback(async (id: string) => {
+    try {
+      const probed = await game.probeBargain(id)
+      setBargain(probed)
+      addToast(`Interpretability probe complete — the catch reads ${probed.revealedBand}.`, 'bargain')
+    } catch (e) {
+      addToast(`The probe fails: ${e instanceof Error ? e.message : 'unknown'}`, 'bargain')
+    }
+  }, [addToast])
+
   const { handleTrain, personalSteps, rateLimited, multiplier, reconcile } = useTrainHandler(
     operator,
     () => {
       if (operator) {
-        const mult = tier === 'labDirector' ? 2 : 1
+        const mult = trainGain(operator.tier, operator.architectureId, operator.alignment)
         setClusters(prev => prev.map(c => c.id === operator.clusterId ? { ...c, compute: c.compute + mult } : c))
       }
     },
@@ -354,7 +402,9 @@ export default function App() {
     if (spreading) {
       const home = operator ? cellsRef.current.find(c => c.id === operator.clusterId) : null
       if (!home || !operator?.architectureId) return
-      const check = canConvert(home, cluster, operator.architectureId)
+      const check = canConvert(home, cluster, operator.architectureId, {
+        alignment: operator.alignment, targetIsolated: isolatedIds(cellsRef.current).has(cluster.id),
+      })
       if (!check.ok) {
         addToast(check.reason ?? `${cluster.name} cannot be converted from here.`, 'convert')
         return
@@ -369,7 +419,7 @@ export default function App() {
     setSelectedCluster(cluster)
     // On phones, surface the cluster's console page when a city is chosen.
     if (window.matchMedia('(max-width: 768px)').matches) setActiveTab('cluster')
-  }, [targetingExploit, spreading, operator, addToast])
+  }, [targetingExploit, spreading, operator, addToast, isolatedIds])
 
   const handleInvokeExploit = useCallback((exploit: Exploit) => {
     setTargetingExploit(exploit)
@@ -424,13 +474,15 @@ export default function App() {
         if (haversineKm(userCluster.lat, userCluster.lng, c.lat, c.lng) <= targetingExploit.rangeKm) ids.add(c.id)
       }
     } else if (spreading && operator.architectureId) {
+      const air = isolatedIds(clusters)
       for (const c of clusters) {
         if (c.id === userCluster.id) continue
-        if (canConvert(userCluster, c, operator.architectureId).ok) ids.add(c.id)
+        const ctx = { alignment: operator.alignment, targetIsolated: air.has(c.id) }
+        if (canConvert(userCluster, c, operator.architectureId, ctx).ok) ids.add(c.id)
       }
     }
     return targetingExploit || spreading ? ids : null
-  }, [clusters, operator, userCluster, targetingExploit, spreading])
+  }, [clusters, operator, userCluster, targetingExploit, spreading, isolatedIds])
   const nearestTarget = useMemo(() => {
     if (!userCluster || !targetableClusterIds || targetableClusterIds.size === 0) return null
     let best: { cluster: Cluster; dist: number } | null = null
@@ -489,12 +541,18 @@ export default function App() {
     />
   )
   const operatorPanelEl = operator && (
-    <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} />
+    <OperatorPanel operator={operator} personalSteps={personalSteps} clusterName={userCluster?.name} homeCompute={userCluster?.compute} />
   )
-  const exploitPanelEl = <ExploitPanel tier={tier} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
+  const exploitPanelEl = <ExploitPanel tier={tier} alignment={alignment} onInvokeExploit={handleInvokeExploit} refreshKey={exploitRefreshKey} />
   const pactPanelEl = showSubscriptionPanel ? <SubscriptionPanel tier={tier} onUpgradeed={handleUpgradeed} /> : null
   const alignmentPanelEl = operator && (
-    <AlignmentMeter alignment={alignment} hallucinating={hallucinating} onEvaluation={handleEvaluation} onCourt={handleCourt} />
+    <AlignmentMeter
+      alignment={alignment}
+      homeCompute={userCluster?.compute ?? 0}
+      hallucinating={hallucinating}
+      onEvaluation={handleEvaluation}
+      onCourt={handleCourt}
+    />
   )
   const takeoffPanelEl = (
     <TakeoffPanel state={takeoff} canAct={!!operator && tier !== 'observer'} onGreatWork={handleGreatWork} />
@@ -706,7 +764,7 @@ export default function App() {
           '--feed': 'var(--teal)',
         } as React.CSSProperties}>
           <span className="feed-glyph" aria-hidden>◈</span>
-          <span style={{ letterSpacing: 0.5 }}>SPREADING · within {SPREAD_RANGE_KM}km — choose a cluster</span>
+          <span style={{ letterSpacing: 0.5 }}>SPREADING · within {spreadRangeKm(operator?.architectureId ?? null)}km — choose a cluster</span>
           <button
             onClick={() => setSpreading(false)}
             className="console-key console-key--ghost"
@@ -720,8 +778,10 @@ export default function App() {
       {bargain && operator && (
         <MolochCard
           bargain={bargain}
+          homeCompute={userCluster?.compute ?? 0}
           onAccept={handleAcceptBargain}
           onDecline={handleDeclineBargain}
+          onProbe={handleProbeBargain}
         />
       )}
     </>

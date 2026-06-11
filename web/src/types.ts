@@ -108,6 +108,12 @@ export type BargainCatchKind =
   | 'defection'      // operators turn; compute and contributors bleed away
   | 'false-alignment'  // the offered calm collapses; alignment crashes below where it began
 
+/**
+ * What an interpretability probe reads off a bargain's hidden catch (spec §7).
+ * The exact chance stays hidden; paid interpretability surfaces this band.
+ */
+export type CatchBand = 'unlikely' | 'coin-flip' | 'likely' | 'near-certain'
+
 /** The hidden downstream exposure. Never shown numerically to the player — only the framing hints it. */
 export interface BargainCatch {
   kind: BargainCatchKind
@@ -132,6 +138,8 @@ export interface Bargain {
   catch: BargainCatch       // hidden
   window: number            // ticks over which the catch may spring once accepted
   expiresInTicks: number    // ignored this long → withdrawn
+  /** Set once an interpretability probe has been paid for — the catch's odds, as a band. */
+  revealedBand?: CatchBand
 }
 
 /** Result of accepting — a human description of the immediate, visible effect. */
@@ -216,6 +224,29 @@ export interface AlignmentUpdate {
   hallucination?: boolean   // client-side dread only; no state change
 }
 
+// ---- Rogue incidents: the treacherous turn (spec §7) ----
+
+export type RogueIncidentKind =
+  | 'treacherous-turn'   // the model corrupts its own run — home compute rolled back
+  | 'defection'          // researchers walk; compute and contributors bleed
+
+/** A low-alignment incident striking the operator's own cluster. Real, unlike the hallucinations beside it. */
+export interface RogueIncident {
+  kind: RogueIncidentKind
+  clusterId: string
+  computeLoss: number
+  contributorLoss: number
+  message: string
+  toLat: number
+  toLng: number
+}
+
+/** The Shoggoth's overnight run — compute accrued while the operator was away (spec §6 boon). */
+export interface IdleYield {
+  compute: number
+  clusterName: string
+}
+
 // ---- The Takeoff: endgame / seasons (spec §9) ----
 
 /** Telegraph of how near the world is to criticality (spec §10). */
@@ -270,6 +301,8 @@ export type GameEvent =
   | { type: 'churn_strike'; data: ChurnStrike }
   | { type: 'breakthrough_earned'; data: BreakthroughEarned }
   | { type: 'alignment_update'; data: AlignmentUpdate }
+  | { type: 'rogue_incident'; data: RogueIncident }
+  | { type: 'idle_yield'; data: IdleYield }
   | { type: 'bargain_offer'; data: { bargain: Bargain } }
   | { type: 'bargain_sprung'; data: BargainSprung }
   | { type: 'cluster_converted'; data: ClusterConverted }

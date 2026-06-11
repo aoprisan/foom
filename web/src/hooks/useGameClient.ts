@@ -3,6 +3,7 @@ import { game, ConnectionState } from '../client'
 import type {
   ClusterUpdate, ClusterTrain, ExploitStrike, ChurnStrike, BreakthroughEarned, AlignmentUpdate,
   Bargain, BargainSprung, ClusterConverted, TakeoffProgress, TakeoffTriggered, Operator,
+  RogueIncident, IdleYield,
 } from '../types'
 
 export type { ConnectionState }
@@ -16,6 +17,8 @@ export interface GameClientHandlers {
   onChurn?: (s: ChurnStrike) => void
   onBreakthrough?: (r: BreakthroughEarned) => void
   onAlignment?: (s: AlignmentUpdate) => void
+  onRogueIncident?: (i: RogueIncident) => void
+  onIdleYield?: (y: IdleYield) => void
   onBargainOffer?: (b: Bargain) => void
   onBargainSprung?: (s: BargainSprung) => void
   onClusterConverted?: (c: ClusterConverted) => void
@@ -45,6 +48,8 @@ export function useGameClient(handlers: GameClientHandlers) {
         case 'churn_strike': h.onChurn?.(e.data); break
         case 'breakthrough_earned': h.onBreakthrough?.(e.data); break
         case 'alignment_update': h.onAlignment?.(e.data); break
+        case 'rogue_incident': h.onRogueIncident?.(e.data); break
+        case 'idle_yield': h.onIdleYield?.(e.data); break
         case 'bargain_offer': h.onBargainOffer?.(e.data.bargain); break
         case 'bargain_sprung': h.onBargainSprung?.(e.data); break
         case 'cluster_converted': h.onClusterConverted?.(e.data); break

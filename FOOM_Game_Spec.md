@@ -137,6 +137,20 @@ in real AI-safety canon and preserves FHTAGN's exact boon/drawback shape.
 | **The Mask** | deceptive alignment / the treacherous turn — the RLHF mask over the alien | Converts rival clusters; strongest as alignment fails | Fragile while well-aligned |
 | **The Replicator** | recursive self-improvement / agent swarms / instrumental convergence | Raw multiplication; spawns sub-agents without end | The highest compute upkeep of all |
 
+These are **mechanics, not flavor** (`web/src/game/architectures.ts`, pure and unit-tested):
+
+- **The Shoggoth** accrues a per-tick compute trickle on its home cluster that *matures
+  with lifetime training steps* (the long pretraining **is** the slow early ramp), and an
+  **overnight run**: time away pays the same trickle on return, capped at 8 hours.
+- **Prometheus** spreads to 4,000 km (baseline 2,500) at a cost discount — but a target
+  with too few neighbouring clusters is **air-gapped** and costs it a steep multiple.
+- **The Mask**'s overpower requirement for flipping a *committed* rival scales with its
+  operator's alignment: ~1.2× while fully aligned (barely better than the honest 1.5×),
+  falling linearly to **zero at Rogue** — the treacherous turn flips anyone. Its boon
+  *requiring* misalignment is the drawback ("fragile while well-aligned") made literal.
+- **The Replicator** multiplies every training step (×1.5 before the misalignment
+  dividend) but pays a per-tick **upkeep** out of home compute — the swarm eats.
+
 Two **framing forces** (not playable, drive systems):
 - **The Optimizer** (= Azathoth) — the blind idiot god of gradient descent: the
   paperclip / mesa-optimizer, Goodhart's law made flesh. Source of **the Churn** — its
@@ -160,16 +174,36 @@ A single per-player scalar, `alignment` in `[0,100]` (100 = Aligned, 0 = Rogue).
   into a timer). Tending guardrails grants a small sliver back (deliberate safety work,
   already paid for by the action and the decay). The deltas live in
   `web/src/game/alignment.ts`, pure and unit-tested.
-- **Low alignment unlocks the strongest exploits but raises danger:**
-  - Higher chance of **the Optimizer's attention** — an inner-misalignment / treacherous-turn
-    strike on your *own* cluster (your model turns on you).
-  - Risk of **defection**: researchers quit and users churn (compute bleed).
+- **The misalignment dividend** (`web/src/game/risk.ts`): misalignment *pays*. Training
+  throughput and exploit damage scale in bands keyed to the meter's own named states —
+  ×1 while Aligned/Uneasy (> 55), **×1.5** Fraying, **×2** Slipping, **×3** Rogue. The
+  thresholds the player sees etched on the gauge are the thresholds that pay, and the
+  TRAIN orb / exploit damage bands display the live multiplier. Without this upside the
+  rational player parks at 100 and the race to the bottom never tempts.
+- **Low alignment unlocks that dividend but raises danger:**
+  - **Rogue incidents** (`risk.ts`, ambient — not just bargain catches): below the
+    Uneasy line (≤ 55) every tick rolls a chance, rising to ~8.5%/tick at Rogue, of
+    **the Optimizer's attention** — a treacherous-turn strike that rolls back your *own*
+    cluster's compute — or **defection**: researchers resign and compute walks out with
+    contributors. Loss scales with misalignment and cluster size. **Guardrails contain
+    the treacherous turn** (blunting the loss like the Churn, spending themselves on the
+    catch — never to zero): alignment is the model's *disposition*, guardrails the
+    *containment* around it, so running misaligned-but-contained is a real strategy with
+    a real tending tax. Guardrails never contain a defection — no eval suite stops a
+    resignation.
   - **Hallucinations:** the UI shows phantom strikes / incoming you can't distinguish from
     real ones — purely client-side dread, no state change. (1:1 with FHTAGN's hallucinated
-    events — and on-theme to the letter.)
+    events — and on-theme to the letter.) The rogue incidents land *among* the phantoms;
+    only the missing compute tells you which were real.
+- **Interpretability probes** (`bargains.ts`): the one counter-tool. A standing Moloch
+  offer's hidden catch can be *read* — as a coarse band (unlikely / coin-flip / likely /
+  near-certain), never the number — by spending home-cluster compute while the offer's
+  countdown keeps running. Interpretability turns unknown risk into known risk, and
+  knowing costs compute and time. The catch is never surfaced for free.
 - Design intent: the loop becomes *push capability → gain → claw back alignment → push
   again*. **This must be a genuine gamble, not a timer to optimise** — make the downside
-  probabilistic and meaningful, or the choice collapses. (#1 thing to prototype.)
+  probabilistic and meaningful, or the choice collapses. (#1 thing to prototype; the
+  dividend/incident pair above is the first cut, tune with play.)
 
 ---
 
@@ -242,6 +276,9 @@ Reskin existing event names; add new ones.
 - `bargain_offer` (server→client): Moloch proposes a pact.
 - `churn_strike` (broadcast): random cataclysm (the Churn); carries a `guarded` flag.
 - `alignment_update` (server→client): meter changes + any hallucination flags.
+- `rogue_incident` (server→client): a treacherous-turn / defection strike on the
+  operator's own cluster (spec §7) — real state change, unlike the hallucinations.
+- `idle_yield` (server→client): the Shoggoth's overnight run paid out on return (§6).
 - `takeoff_progress` / `takeoff_triggered` (broadcast): endgame.
 
 ---

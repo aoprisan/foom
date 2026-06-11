@@ -66,6 +66,12 @@ export interface GameClient {
   acceptBargain(id: string): Promise<BargainOutcome>
   /** Hold review; the offer is withdrawn, no cost. */
   declineBargain(id: string): void
+  /**
+   * Run an interpretability probe on the standing offer: spends home-cluster
+   * compute to surface the hidden catch's odds as a coarse band (spec §7).
+   * Returns the updated bargain. Throws if the offer has passed or compute is too thin.
+   */
+  probeBargain(id: string): Promise<Bargain>
 
   // --- realtime ---
   on(handler: (e: GameEvent) => void): () => void   // returns unsubscribe

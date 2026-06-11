@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { game } from '../client'
+import { trainGain } from '../game/risk'
 import type { Operator, Tier } from '../types'
 
 const RATE_LIMIT = 100
@@ -21,7 +22,9 @@ export function useTrainHandler(
   const rateLimitTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(rateLimitTimer.current), [])
 
-  const multiplier = operator?.tier === 'labDirector' ? 2 : 1
+  // Tier × architecture × the misalignment dividend — the same pure function the
+  // sim runs, so the optimistic update, the orb label, and the server agree.
+  const multiplier = operator ? trainGain(operator.tier, operator.architectureId, operator.alignment) : 1
 
   useEffect(() => {
     setPendingSteps(0)

@@ -1,4 +1,5 @@
-import type { Bargain, BargainKind, BargainCatchKind } from '../types'
+import type { Bargain, BargainKind, BargainCatchKind, CatchBand } from '../types'
+import { misalignment01 } from './alignment'
 
 // Moloch's bargains — the race to the bottom (spec §6, §7).
 //
@@ -11,15 +12,16 @@ import type { Bargain, BargainKind, BargainCatchKind } from '../types'
 //
 //   1. As alignment falls, offers get STRONGER (better grants) and catches get
 //      WORSE (higher chance, bigger loss). Capability and danger rise together.
-//   2. The catch's chance and magnitude are never surfaced to the UI. The player
-//      gambles on the flavour's hint, not on numbers.
+//   2. The catch's chance and magnitude are never surfaced for free. The player
+//      gambles on the flavour's hint, not on numbers — unless the lab pays for
+//      an interpretability probe, which spends home compute to read the catch's
+//      odds as a coarse band (`catchBand`). Interpretability is exactly the
+//      safety tool that turns unknown risk into known risk, and knowing costs.
 
 type Rng = () => number
 
-/** 0 while fully aligned, 1 at the brink — how far capability has been pushed. */
-function pushT(alignment: number): number {
-  return Math.max(0, Math.min(1, (100 - alignment) / 100))
-}
+/** How far capability has been pushed — the shared misalignment curve (alignment.ts). */
+const pushT = misalignment01
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
@@ -171,6 +173,29 @@ export function rollBargain(alignment: number, id: string, rng: Rng = Math.rando
     expiresInTicks: 12,
     ...built,
   }
+}
+
+// ---- interpretability probes (spec §7): paid sight into the hidden catch ----
+
+/** The probe spends this fraction of home compute… */
+export const PROBE_COST_FRACTION = 0.03
+/** …but never less than this — insight is never free. */
+export const PROBE_MIN_COST = 600
+
+/** Compute an interpretability probe spends — the probe runs on your own GPUs. */
+export function probeCost(homeCompute: number): number {
+  return Math.max(PROBE_MIN_COST, Math.round(homeCompute * PROBE_COST_FRACTION))
+}
+
+/**
+ * Coarsen a catch's hidden chance into the band a probe reveals. Deliberately
+ * lossy: interpretability gives you a reading, not the weights.
+ */
+export function catchBand(chance: number): CatchBand {
+  if (chance < 0.3) return 'unlikely'
+  if (chance < 0.5) return 'coin-flip'
+  if (chance < 0.65) return 'likely'
+  return 'near-certain'
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { Cluster, ArchitectureId } from '../types'
 import { haversineKm } from './geo'
+import { spreadRangeKm, spreadCostMultiplier, overpowerRatio } from './architectures'
 
 // Spread, conversion & the Takeoff — the endgame (spec §9, build phase 6).
 //
@@ -14,8 +15,7 @@ import { haversineKm } from './geo'
 // Spread is physical datacenter buildout — power, fiber, permits, talent are
 // regional — which is why it has a range at all (spec §9: the geography moat).
 
-export const SPREAD_RANGE_KM = 2500       // how far one buildout can reach
-export const OVERPOWER_RATIO = 1.5        // dominate a rival by this much to flip the committed
+export const SPREAD_RANGE_KM = 2500       // baseline buildout reach (Prometheus reaches further — architectures.ts)
 export const SPREAD_COST_FRACTION = 0.05  // compute the home cluster spends to seed a new one
 export const SPREAD_MIN_COST = 500
 export const SPREAD_SEED_RETENTION = 0.6  // fraction of the cost that survives the journey
@@ -32,25 +32,42 @@ export interface ConvertCheck {
   cost?: number
 }
 
+/** Operator-side context canConvert needs for the architecture asymmetries (spec §6). */
+export interface ConvertContext {
+  /** The operator's alignment — the Mask's deception scales with its loss. Defaults to fully aligned. */
+  alignment?: number
+  /** Whether the target sits in an isolated, air-gapped region (architectures.ts isIsolated). */
+  targetIsolated?: boolean
+}
+
 /**
  * Whether `home` (building `architecture`) may convert `target`. The uncommitted fall
- * to anyone in range; a rival's cluster only flips if you overpower it — or if you
- * build The Mask, which turns even committed clusters wherever the deceptive turn
- * reaches (spec §6 boon).
+ * to anyone in range; a rival's cluster only flips if you overpower it. The
+ * architecture asymmetries (spec §6) run through here: Prometheus reaches further
+ * but pays dearly into air-gapped regions; the Mask's overpower requirement falls
+ * away with its operator's alignment.
  */
-export function canConvert(home: Cluster, target: Cluster, architecture: ArchitectureId | null): ConvertCheck {
+export function canConvert(
+  home: Cluster, target: Cluster, architecture: ArchitectureId | null, ctx: ConvertContext = {},
+): ConvertCheck {
   if (home.id === target.id) return { ok: false, reason: 'A cluster cannot spread into itself.' }
+  const range = spreadRangeKm(architecture)
   const dist = haversineKm(home.lat, home.lng, target.lat, target.lng)
-  if (dist > SPREAD_RANGE_KM) return { ok: false, reason: `Beyond your buildout reach (${Math.round(dist)}km > ${SPREAD_RANGE_KM}km).` }
+  if (dist > range) return { ok: false, reason: `Beyond your buildout reach (${Math.round(dist)}km > ${range}km).` }
   if (target.architectureId && architecture && target.architectureId === architecture) {
     return { ok: false, reason: 'Already running your architecture.' }
   }
-  const cost = spreadCost(home)
+  const cost = Math.round(spreadCost(home) * spreadCostMultiplier(architecture, ctx.targetIsolated ?? false))
   if (home.compute < cost + 100) return { ok: false, reason: 'Too little compute to seed a new cluster.' }
   if (target.architectureId !== null) {
-    const isMask = architecture === 'mask'
-    if (!isMask && home.compute < target.compute * OVERPOWER_RATIO) {
-      return { ok: false, reason: 'The rival holds too strong — only The Mask flips the committed.' }
+    const required = overpowerRatio(architecture, ctx.alignment ?? 100)
+    if (home.compute < target.compute * required) {
+      return {
+        ok: false,
+        reason: architecture === 'mask'
+          ? 'The rival holds too strong — the Mask flips the committed only as alignment fails.'
+          : 'The rival holds too strong — overpower it, or let the Mask architecture rot it from within.',
+      }
     }
   }
   return { ok: true, cost }

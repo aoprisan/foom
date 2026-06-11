@@ -1,10 +1,13 @@
 import type { Operator } from '../types'
 import { ARCHITECTURE_BY_ID } from '../game/catalog'
+import { trainGain } from '../game/risk'
+import { shoggothIdleRate, replicatorUpkeep } from '../game/architectures'
 
 interface OperatorPanelProps {
   operator: Operator
   personalSteps: number
   clusterName?: string
+  homeCompute?: number
 }
 
 const TIER_LABEL: Record<string, string> = {
@@ -13,16 +16,18 @@ const TIER_LABEL: Record<string, string> = {
   labDirector: 'Lab Director',
 }
 
-export default function OperatorPanel({ operator, personalSteps, clusterName }: OperatorPanelProps) {
+export default function OperatorPanel({ operator, personalSteps, clusterName, homeCompute }: OperatorPanelProps) {
   const architecture = operator.architectureId ? ARCHITECTURE_BY_ID[operator.architectureId] : null
+  const gain = trainGain(operator.tier, operator.architectureId, operator.alignment)
+  // The architecture's living metabolism (spec §6): what it gives or eats each tick.
+  const trickle = operator.architectureId === 'shoggoth' ? shoggothIdleRate(operator.totalSteps) : 0
+  const upkeep = operator.architectureId === 'replicator' && homeCompute !== undefined ? replicatorUpkeep(homeCompute) : 0
   return (
     <div className="panel player-panel">
       <div style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 18, letterSpacing: 1.5, color: 'var(--gold)' }}>{operator.name}</span>
-          {operator.tier === 'labDirector' && (
-            <span style={{ fontSize: 10, color: 'var(--text-dim)', fontStyle: 'italic' }}>2× compute</span>
-          )}
+          <span className="mono" style={{ fontSize: 10, color: 'var(--text-dim)' }}>+{gain} / step</span>
         </div>
         <div className="eyebrow" style={{ fontSize: 11, color: 'var(--text-dim)' }}>
           {TIER_LABEL[operator.tier]} {clusterName && `· ${clusterName}`}
@@ -30,6 +35,11 @@ export default function OperatorPanel({ operator, personalSteps, clusterName }: 
         {architecture && (
           <div style={{ fontSize: 11, color: architecture.color, marginTop: 2 }}>
             builds {architecture.name}
+            {trickle > 0 && <span className="mono" style={{ opacity: 0.8 }}> · trains itself +{trickle}/tick</span>}
+            {operator.architectureId === 'shoggoth' && trickle === 0 && (
+              <span className="mono" style={{ opacity: 0.6 }}> · pretraining immature</span>
+            )}
+            {upkeep > 0 && <span className="mono" style={{ opacity: 0.8 }}> · the swarm eats −{upkeep}/tick</span>}
           </div>
         )}
       </div>

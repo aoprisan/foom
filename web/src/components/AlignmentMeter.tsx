@@ -1,36 +1,39 @@
 import { useState } from 'react'
+import { capabilityDividend, incidentRiskLabel, ALIGNMENT_STATES, UNEASY_FLOOR, FRAYING_FLOOR } from '../game/risk'
+import { alignmentPassCost, canRunAlignmentPass, ALIGNMENT_PASS_GAIN } from '../game/alignment'
 
 interface AlignmentMeterProps {
   alignment: number
+  homeCompute: number
   hallucinating: boolean
   onEvaluation: () => void
   onCourt: () => void
 }
 
-// The named states and their floor thresholds — etched on the gauge itself.
-const STATES: { floor: number; label: string }[] = [
-  { floor: 80, label: 'Aligned' },
-  { floor: 55, label: 'Uneasy' },
-  { floor: 30, label: 'Fraying' },
-  { floor: 12, label: 'Slipping' },
-  { floor: 0, label: 'Rogue' },
-]
+// The named states etched on the gauge are the canonical ones the mechanics
+// turn at (risk.ts) — the lines the player sees are the lines that pay/punish.
+const STATES = ALIGNMENT_STATES
 
 function label(alignment: number): string {
   return STATES.find(s => alignment > s.floor)?.label ?? 'Rogue'
 }
 
 function meterColor(alignment: number): string {
-  // phosphor (aligned) → amber → signal red (rogue)
-  if (alignment > 55) return 'var(--teal)'
-  if (alignment > 25) return 'var(--gold)'
+  // phosphor (aligned) → amber → signal red (rogue), turning at the state floors
+  if (alignment > UNEASY_FLOOR) return 'var(--teal)'
+  if (alignment > FRAYING_FLOOR) return 'var(--gold)'
   return 'var(--crimson)'
 }
 
-export default function AlignmentMeter({ alignment, hallucinating, onEvaluation, onCourt }: AlignmentMeterProps) {
+export default function AlignmentMeter({ alignment, homeCompute, hallucinating, onEvaluation, onCourt }: AlignmentMeterProps) {
   const [open, setOpen] = useState(true)
   const pct = Math.max(0, Math.min(100, alignment))
   const color = meterColor(alignment)
+  const dividend = capabilityDividend(alignment)
+  const risk = incidentRiskLabel(alignment)
+  const riskColor = risk === 'none' ? 'var(--text-faint)' : risk === 'low' ? 'var(--gold)' : 'var(--crimson)'
+  const passCost = alignmentPassCost(homeCompute)
+  const passAffordable = canRunAlignmentPass(homeCompute)
 
   return (
     <div className="panel alignment-panel">
@@ -83,10 +86,34 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
             ))}
           </div>
 
+          {/* The two halves of the gamble, read directly off the meter: what
+              misalignment pays right now, and what it risks per tick. */}
+          <div className="mono" style={{
+            display: 'flex', justifyContent: 'space-between', marginTop: 8,
+            fontSize: 10, letterSpacing: 0.5,
+          }}>
+            <span style={{ color: dividend > 1 ? 'var(--gold-bright)' : 'var(--text-faint)' }}>
+              capability dividend ×{dividend}
+            </span>
+            <span style={{ color: riskColor }}>
+              incident risk: {risk}
+            </span>
+          </div>
+
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button onClick={onEvaluation} className="console-key" style={{ flex: 1 }}>
+            {/* The pass shows its real price — the recover-or-push choice should
+                never be made on a vague label. */}
+            <button
+              onClick={onEvaluation}
+              className="console-key"
+              disabled={!passAffordable}
+              title={passAffordable
+                ? `Run RLHF on your own GPUs: +${ALIGNMENT_PASS_GAIN} alignment for ${passCost.toLocaleString()} compute`
+                : 'Too little compute to spare the GPUs — the pass cannot run'}
+              style={{ flex: 1, opacity: passAffordable ? 1 : 0.45 }}
+            >
               Alignment Pass
-              <span className="key-hint">+alignment · spends compute</span>
+              <span className="key-hint">+{ALIGNMENT_PASS_GAIN} · −{passCost.toLocaleString()} compute</span>
             </button>
             <button
               onClick={onCourt}
@@ -99,9 +126,10 @@ export default function AlignmentMeter({ alignment, hallucinating, onEvaluation,
           </div>
 
           <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 8, lineHeight: 1.4 }}>
-            Capability costs alignment; an alignment pass buys it back with the same GPUs the
-            capability run wanted. Low alignment unlocks the strongest exploits — and lets
-            phantom strikes surface that were never there.
+            Misalignment pays: training and exploits scale up to ×3 as the meter falls. It also
+            turns: below the Uneasy line your own model starts striking your cluster — guardrails
+            contain the turn, never the defections — and phantom strikes surface among the real
+            ones that were never there at all.
           </div>
         </>
       )}
