@@ -258,12 +258,17 @@ body::after {
   50% { opacity: 0; }
 }
 
-/* ── Rules button — the how-to-play door, parked under the wordmark ────────── */
-.rules-btn {
+/* ── Top-left toolbar — the how-to-play door + the update control, parked
+   under the wordmark ──────────────────────────────────────────────────────── */
+.top-toolbar {
   position: absolute;
   top: 72px;
   left: 24px;
   z-index: 12;
+  display: flex;
+  gap: 6px;
+}
+.rules-btn {
   padding: 5px 11px;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -283,6 +288,14 @@ body::after {
   box-shadow: 0 0 18px -6px var(--teal);
 }
 .rules-btn:active { transform: translateY(1px); }
+/* the update control: a square glyph key, same plate as Rules */
+.rules-btn--icon {
+  padding: 5px 8px;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.rules-btn--icon:active { transform: translateY(1px) rotate(180deg); }
 /* legacy keyframe kept — the App loading screen flickers like a cold tube */
 @keyframes flicker {
   0%, 100% { opacity: 1; }
@@ -496,7 +509,9 @@ button:active { filter: brightness(0.92); }
   /* Header band: wordmark left, world compute right */
   .logo { top: 14px; left: 14px; font-size: 26px; letter-spacing: 4px; }
   .logo::after { width: 7px; height: 13px; right: -11px; top: 11px; }
-  .rules-btn { top: 58px; left: 14px; padding: 4px 9px; font-size: 9px; }
+  .top-toolbar { top: 58px; left: 14px; }
+  .rules-btn { padding: 4px 9px; font-size: 9px; }
+  .rules-btn--icon { padding: 4px 7px; font-size: 12px; }
 
   .global-counter {
     position: absolute !important;

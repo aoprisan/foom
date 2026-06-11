@@ -25,6 +25,9 @@ export function useToasts() {
 
 interface ToastSystemProps {
   toasts: Toast[]
+  // Distance from the top of the viewport. The feed sits below the world-compute
+  // HUD, and drops further when the Objective hint occupies that band too.
+  top?: number
 }
 
 // Each event type announces itself with a glyph and an accent — the same
@@ -40,12 +43,12 @@ const FEED: Record<ToastType, { glyph: string; accent: string }> = {
   takeoff: { glyph: '✦', accent: 'var(--gold-bright)' },
 }
 
-export default function ToastSystem({ toasts }: ToastSystemProps) {
+export default function ToastSystem({ toasts, top = 108 }: ToastSystemProps) {
   if (toasts.length === 0) return null
 
   return (
     <div style={{
-      position: 'absolute', top: 80, left: '50%', transform: 'translateX(-50%)',
+      position: 'absolute', top, left: '50%', transform: 'translateX(-50%)',
       zIndex: 50, display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center',
     }}>
       {toasts.map(toast => {

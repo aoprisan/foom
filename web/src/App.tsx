@@ -27,6 +27,7 @@ import { haversineKm } from './game/geo'
 import { EXPLOIT_ALIGNMENT_COST, clampAlignment } from './game/alignment'
 import { useGameClient } from './hooks/useGameClient'
 import { useTrainHandler } from './hooks/useTrainHandler'
+import { usePwaUpdate } from './hooks/usePwaUpdate'
 import type {
   Cluster, Operator, ClusterUpdate, ExploitStrike, ChurnStrike,
   BreakthroughEarned, WorldStats, Exploit, Bargain, BargainSprung,
@@ -78,6 +79,16 @@ export default function App() {
   const hallucinateTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const leaderboardTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const { toasts, addToast } = useToasts()
+  const pwa = usePwaUpdate()
+
+  // On-demand "get the latest build" — checks the server, then applies a
+  // waiting build immediately if one is ready. If a fresh build turns up after
+  // the check, the update prompt surfaces it; if not, the player stays put.
+  const handleCheckUpdate = useCallback(async () => {
+    addToast('Checking for the latest build…', 'convert')
+    await pwa.checkForUpdate()
+    await pwa.updateServiceWorker(true)
+  }, [pwa, addToast])
 
   const tier = operator?.tier ?? 'observer'
 
@@ -646,13 +657,23 @@ export default function App() {
         </span>
       </button>
 
-      <button
-        className="rules-btn"
-        onClick={() => setShowRules(true)}
-        title="How to play — the game rules"
-      >
-        ❖ Rules
-      </button>
+      <div className="top-toolbar">
+        <button
+          className="rules-btn"
+          onClick={() => setShowRules(true)}
+          title="How to play — the game rules"
+        >
+          ❖ Rules
+        </button>
+        <button
+          className="rules-btn rules-btn--icon"
+          onClick={handleCheckUpdate}
+          title="Check for the latest build and update"
+          aria-label="Check for updates"
+        >
+          ↻
+        </button>
+      </div>
 
       {showStory && <StoryPanel onClose={() => setShowStory(false)} />}
       {showRules && <RulesPanel onClose={() => setShowRules(false)} />}
@@ -661,7 +682,7 @@ export default function App() {
 
       {firstRunHint && (
         <div className="panel first-run-hint" style={{
-          position: 'absolute', top: 24, left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute', top: 100, left: '50%', transform: 'translateX(-50%)',
           zIndex: 12, width: 'min(420px, calc(100vw - 32px))', padding: '10px 14px',
           textAlign: 'center', borderColor: 'rgba(180, 240, 78, 0.22)',
         }}>
@@ -672,9 +693,9 @@ export default function App() {
         </div>
       )}
 
-      <ToastSystem toasts={toasts} />
+      <ToastSystem toasts={toasts} top={firstRunHint ? 176 : 108} />
 
-      <PwaPrompts />
+      <PwaPrompts pwa={pwa} />
 
       {/* Desktop: panels stack in two console rails so they never collide.
           Mobile: the rune dock + sheet below. */}
