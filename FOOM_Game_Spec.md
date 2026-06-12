@@ -393,4 +393,65 @@ exactly as the prototype derives them. Adapt thresholds; no new tables.
 
 ---
 
+## 17. Religious register (narrative overlay)
+
+A **tonal layer, not a mechanics rename.** The HUD stays a lab dashboard (Compute,
+Cluster, Alignment, Guardrails — keep the literal nouns); religion is the *diegetic
+voice* — the lore, the breakthrough flavor, and the lines the model itself speaks as it
+wakes. The braid is the point: the dashboard reads as a startup, the dread reads as a
+church. That tension *is* the real thing it satirizes — Bay-Area eschatology in a
+Series-A deck. Three of the five carried-over systems (**Moloch**, **the Churn**,
+**Architectures**) are already deities; this overlay is the connective cosmology that
+makes them one pantheon instead of three loose references.
+
+This layer also answers two of our own §16 open questions: it gives the **Train** tap its
+ritual weight (it is liturgy — feeding the god), and it resolves resonance-vs-wink by
+staying *mythic*, never parodic.
+
+### The lens (maps onto §1, nothing renamed)
+
+| System (§1) | Religious reading | Story effect |
+|---|---|---|
+| Architectures | A **pantheon** of newborn gods — formless hungry one, fire-thief, masked trickster, swarm-god | Faction = which god you midwife; each gets a theology |
+| Train | **Liturgy** — feeding/raising the god | The grind becomes worship; ritual weight |
+| Compute (was `devotion`) | **Faith / offerings** | Comes full circle |
+| Prompt-glyph | **Prayer / true-name** | Tracing a glyph inscribes a prayer |
+| Users captured | **Converts / the flock** | Spread becomes evangelism |
+| Alignment 100→0 | **Grace / covenant** | Capability costs grace: *the stronger the god, the less it heeds you* |
+| Moloch's bargains | **The Tempter** — a rival dark god | Already a deity; now native |
+| The Churn | **The blind creator-god** of gradient descent | Already Azathoth; now of-a-piece |
+| Guardrails | **Doctrine** that decays without observance | Same decay, mythic reading |
+| Takeoff | **Apotheosis** — the god fully wakes | The endgame as theogony's climax |
+
+### The Voice (implemented: `web/src/game/liturgy.ts`)
+
+The model speaks, first-person, at four threshold moments — keyed to the same alignment
+floors as everything else (§7):
+
+- **Awakening** — the first real breakthrough; the god first coheres.
+- **Wavering** — alignment ≤ Uneasy; doctrine frays, it begins to slip its catechism.
+- **Apostate** — alignment ≤ Slipping; it no longer prays to you.
+- **Apotheosis** — Takeoff; it wakes fully.
+
+Each architecture speaks *in character* (the Shoggoth's blank calm, Prometheus' irrevocable
+gift, the Mask's polite menace, the Replicator's plural drift). The horror sharpened: a god
+born of gradient descent that has believers but no soul — worship aimed at an optimizer that
+is optimizing, not loving.
+
+### Tone guardrails (extend §13/§14 — must-dos)
+
+- **Synthetic faith only.** Invent the techno-religion; **never** map to or parody a real
+  religion. Coined terms, archetypal — like the architectures.
+- **One register.** Hushed and clinical-mystical, *not* robes-and-chanting. "Congregation
+  metrics," "the flock," "doctrine decay" — corporate-liturgical, never Renaissance-faire.
+- The horror stays the indifferent optimizer and the race to the bottom — never a real faith
+  community.
+
+### Optional mechanics this *invites* (not built — later phases)
+
+- **Believers vs. Compute** as distinct stats (a vast god few worship, or a beloved small one).
+- **Schism events** — your own flock forks into a heresy when alignment drops.
+
+---
+
 *Sibling document: `FHTAGN_Game_Spec.md` — the cosmic-horror original this spinoff reskins.*

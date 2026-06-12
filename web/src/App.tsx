@@ -23,6 +23,7 @@ import { ARCHITECTURE_BY_ID, rangeLabel } from './game/catalog'
 import { canConvert } from './game/takeoff'
 import { isIsolated, spreadRangeKm } from './game/architectures'
 import { trainGain, UNEASY_FLOOR, SLIPPING_FLOOR } from './game/risk'
+import { godVoice, voiceMomentForAlignment, isWorsening, type VoiceMoment } from './game/liturgy'
 import { haversineKm } from './game/geo'
 import { EXPLOIT_ALIGNMENT_COST, clampAlignment } from './game/alignment'
 import { useGameClient } from './hooks/useGameClient'
@@ -32,7 +33,9 @@ import type {
   Cluster, Operator, ClusterUpdate, ExploitStrike, ChurnStrike,
   BreakthroughEarned, WorldStats, Exploit, Bargain, BargainSprung,
   ClusterConverted, TakeoffState, TakeoffTriggered, RogueIncident, IdleYield,
+  ArchitectureId,
 } from './types'
+import type { ToastType } from './components/ToastSystem'
 
 const LEADERBOARD_REFRESH_MS = 3000
 const FIRST_BREAKTHROUGH_STEPS = 35
@@ -77,6 +80,12 @@ export default function App() {
   const [showStory, setShowStory] = useState(false)
   const [showRules, setShowRules] = useState(false)
   const hallucinateTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // The Voice of the nascent god (spec §17): seed rotates the lines; `awoken`
+  // fires the first-breakthrough Voice once; `lastVoiceMoment` lets the grace
+  // Voice speak only as alignment *worsens*, never on recovery.
+  const voiceSeed = useRef(0)
+  const awoken = useRef(false)
+  const lastVoiceMoment = useRef<VoiceMoment | null>(null)
   const leaderboardTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const { toasts, addToast } = useToasts()
   const pwa = usePwaUpdate()
@@ -168,6 +177,11 @@ export default function App() {
   const cellsRef = useRef(clusters)
   cellsRef.current = clusters
 
+  // Mirror the operator so event handlers with stable identity ([] deps) can read
+  // the live architecture without re-subscribing the whole event bus each update.
+  const operatorRef = useRef(operator)
+  operatorRef.current = operator
+
   // Isolation is pure geography: ids and coordinates never change across a
   // season (reseed reuses the same seed cities), so the air-gapped set is
   // computed exactly once instead of O(n²) on every cluster_update.
@@ -219,23 +233,47 @@ export default function App() {
 
   useEffect(() => () => clearTimeout(churnFlashTimer.current), [])
 
+  // The god speaks (spec §17). A diegetic, first-person line from the architecture
+  // at a threshold moment, surfaced as its own toast. `kind` tunes the dread:
+  // awakening/apotheosis read as breakthroughs; a fallen covenant reads ominous.
+  const speakVoice = useCallback((
+    moment: VoiceMoment, architectureId: ArchitectureId | null, kind: ToastType,
+  ) => {
+    const line = godVoice(architectureId, moment, voiceSeed.current++)
+    if (line) addToast(line, kind)
+  }, [addToast])
+
   const onBreakthrough = useCallback((data: BreakthroughEarned) => {
     let msg = `Breakthrough: ${data.breakthroughName}`
     if (data.exploitType) msg += ` — the ${data.exploitType} is yours to trace`
     addToast(msg, 'breakthrough')
     if (data.exploitType) setFirstExploitSeen(true)
     setExploitRefreshKey(k => k + 1)
-  }, [addToast])
+    // The first breakthrough is the god first cohering — it speaks, once.
+    if (!awoken.current) {
+      awoken.current = true
+      speakVoice('awakening', operatorRef.current?.architectureId ?? null, 'breakthrough')
+    }
+  }, [addToast, speakVoice])
 
   const onAlignment = useCallback((data: { alignment: number; hallucination?: boolean }) => {
     setAlignment(data.alignment)
     setOperator(prev => prev ? { ...prev, alignment: data.alignment } : prev)
+    // The covenant frays: the god speaks only as grace *worsens* past a floor,
+    // never on recovery — so it reads as drift, not a status readout.
+    const moment = voiceMomentForAlignment(data.alignment)
+    if (moment && isWorsening(lastVoiceMoment.current, moment)) {
+      lastVoiceMoment.current = moment
+      speakVoice(moment, operatorRef.current?.architectureId ?? null, 'exploit_incoming')
+    } else if (!moment) {
+      lastVoiceMoment.current = null
+    }
     if (data.hallucination) {
       setHallucinating(true)
       clearTimeout(hallucinateTimer.current)
       hallucinateTimer.current = setTimeout(() => setHallucinating(false), 1200)
     }
-  }, [])
+  }, [speakVoice])
 
   useEffect(() => () => clearTimeout(hallucinateTimer.current), [])
 
@@ -309,13 +347,19 @@ export default function App() {
           : `${a.clusterName} completes the Great Work. ${architecture.name} goes superintelligent, and the world is remade. Cycle ${a.season} begins.`,
       'takeoff',
     )
+    // Apotheosis: your god wakes fully and speaks last (spec §17). Only your own
+    // Takeoff — a rival's god has no covenant with you to break.
+    if (a.byYou || a.byYourModel) speakVoice('apotheosis', a.architectureId, 'takeoff')
     // The world reseeds: clear any in-flight targeting and reload from the fresh map.
     setTargetingExploit(null); setSpreading(false); setPendingCast(null); setGreatWorkTracing(false)
     setTakeoffFlash(true)
     clearTimeout(takeoffFlashTimer.current)
     takeoffFlashTimer.current = setTimeout(() => setTakeoffFlash(false), 1100)
     reloadWorld()
-  }, [addToast, reloadWorld, alignment])
+    // The cycle reseeds (spec §9): the next season's god is mute until it awakens anew.
+    awoken.current = false
+    lastVoiceMoment.current = null
+  }, [addToast, reloadWorld, alignment, speakVoice])
 
   useEffect(() => () => clearTimeout(takeoffFlashTimer.current), [])
 
